@@ -3,6 +3,7 @@ package nwes.mywebsite;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/account")
@@ -38,5 +39,13 @@ public class PasswordManagerController {
 
         return "OK";
     }
+    @GetMapping("/list")
+    @ResponseBody
+    public List<Account> getAccounts(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return accountService.getAccountsByUser(user);
+    }
+
 }
 

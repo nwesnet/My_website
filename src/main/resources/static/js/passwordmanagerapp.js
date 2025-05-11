@@ -28,6 +28,8 @@ window.onload = function () {
                     renderGeneratePasswordUI();
                 } else if (action === "Preferences") {
                     renderPreferencesUI();
+                }else if(action === "Show List") {
+                    renderShowListUI();
                 } else {
                     renderPlaceholder(action + "...");
                 }
@@ -220,6 +222,74 @@ window.onload = function () {
         }
         return result;
     }
+    function renderShowListUI() {
+        middleContent.innerHTML = `
+            <div style="margin-bottom: 16px;">
+                <button class="form-button tab-btn" data-type="Account">Accounts</button>
+                <button class="form-button tab-btn" data-type="Card">Cards</button>
+                <button class="form-button tab-btn" data-type="Link">Links</button>
+                <button class="form-button tab-btn" data-type="Wallet">Wallets</button>
+            </div>
+            <div id="listContent"></div>
+        `;
+
+        // Default tab
+        loadAccountList();
+
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const type = btn.getAttribute("data-type");
+                if (type === "Account") loadAccountList();
+                else document.getElementById("listContent").innerHTML = `<p>Coming soon: ${type}</p>`;
+            });
+        });
+    }
+    function loadAccountList() {
+        fetch("/account/list")
+            .then(response => response.json())
+            .then(data => {
+                const listContent = document.getElementById("listContent");
+                listContent.innerHTML = '';
+
+                if (data.length === 0) {
+                    listContent.innerHTML = "<p>No accounts saved.</p>";
+                    return;
+                }
+
+                data.forEach(account => {
+                    const row = document.createElement("div");
+                    row.style.marginBottom = "20px";
+                    row.innerHTML = `
+                        <label class="form-label">Resource:</label>
+                        <input class="form-input" type="text" value="${account.resource}" readonly><br>
+                        <label class="form-label">Login:</label>
+                        <input class="form-input" type="text" value="${account.username}" readonly><br>
+                        <label class="form-label">Password:</label>
+                        <input class="form-input" type="password" value="${account.password}" readonly>
+                        <button class="form-button toggle-btn">👁️</button>
+                        <hr style="margin-top: 20px;">
+                    `;
+
+                    listContent.appendChild(row);
+
+                    // Add toggle password visibility
+                    const toggleBtn = row.querySelector(".toggle-btn");
+                    const passwordInput = row.querySelector('input[type="password"]');
+                    toggleBtn.addEventListener("click", () => {
+                        if (passwordInput.type === "password") {
+                            passwordInput.type = "text";
+                        } else {
+                            passwordInput.type = "password";
+                        }
+                    });
+                });
+            })
+            .catch(err => {
+                console.error("Failed to load accounts:", err);
+                document.getElementById("listContent").innerHTML = "<p>Error loading accounts.</p>";
+            });
+    }
+
 
     function renderPreferencesUI() {
         middleContent.innerHTML = `
