@@ -8,7 +8,7 @@
     --accent: #2ecc71;
     --text: #fff;
     --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
-    --radius: 10px;
+    --radius: 4px;
     --trans-fast: 0.15s ease;
     --trans-med: 0.3s ease;
 
@@ -254,7 +254,7 @@ html, body {
 footer {
     background: var(--bg);
     text-align: center;
-    padding: 30px 10px;
+    padding: 0px;
     font-size: 16px;
     border-top: 1px solid var(--card);
 }
