@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <Title>NWESnet</Title>
+        <link id="theme-style" rel="stylesheet" href="/css/dark.css">
+    </head>
+    <body>
+        <div th:replace="fragments :: navbar"></div>
+
+        <!-- Main Section -->
+        <div class="main">
+
+            <!-- Password Manager Showcase -->
+            <div class="showcase">
+                <h2>Password Manager</h2>
+                <img id="mainImage1" src="/img/PasswordmanagerImg/PasswordManagerIng.png" alt="Main Image">
+                <div class="thumbnail-bar">
+                    <button class="scroll-btn" onclick="previousImage(1)">◀</button>
+                    <div class="thumbnails" id="thumbnails1">
+                        <img src="/img/PasswordmanagerImg/PasswordManagerIng.png">
+                        <img src="/img/PasswordmanagerImg/LoginPage.png">
+                        <img src="/img/PasswordmanagerImg/AddDataPage.png">
+                        <img src="/img/PasswordmanagerImg/GeneratePasswordPage.png">
+                        <img src="/img/PasswordmanagerImg/SecuritySettings.png">
+                        <img src="/img/PasswordmanagerImg/MainPage.png">
+                    </div>
+                    <button class="scroll-btn" onclick="nextImage(1)">▶</button>
+                </div>
+                <a href="/projects/passwordmanager" class="project-link">Visit Project Page</a>
+            </div>
+
+            <!-- Dictionary Showcase -->
+            <div class="showcase">
+                <h2>Dictionary</h2>
+                <img id="mainImage2" src="/img/DictionaryImg/Iwantit.png" alt="Main Image">
+                <div class="thumbnail-bar">
+                    <button class="scroll-btn" onclick="previousImage(2)">◀</button>
+                    <div class="thumbnails" id="thumbnails2">
+                        <img src="/img/DictionaryImg/Iwantit.png">
+                        <img src="/img/DictionaryImg/IwantitFirst.png">
+                        <img src="/img/DictionaryImg/ooomy.png">
+                        <img src="/img/DictionaryImg/bats.png">
+                        <img src="/img/DictionaryImg/beautiful.png">
+                    </div>
+                    <button class="scroll-btn" onclick="nextImage(2)">▶</button>
+                </div>
+                <a href="/projects/dictionary" class="project-link">Visit Project Page</a>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>Contact: support@passwordmanager.com | &copy; 2025 PasswordManager Inc.</p>
+        </footer>
+
+        <script src="/js/main.js"></script>
+        <script src="/js/theme-switcher.js"></script>
+    </body>
+
+</html>
