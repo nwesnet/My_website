@@ -57,7 +57,7 @@ window.onload = function () {
             <div id="formContent" style="margin-top: 20px;"></div>
 
             <div style="margin-top: 20px;">
-                <button class="form-button" onclick="alert('Saved')">Save</button>
+                <button id="saveAccountBtn" class="form-button">Save</button>
                 <button class="form-button" onclick="document.getElementById('middleContent').innerHTML = ''">Cancel</button>
             </div>
         `;
@@ -65,6 +65,39 @@ window.onload = function () {
         middleContent.innerHTML = '';
         middleContent.appendChild(formWrapper);
         renderFormFields(defaultType);
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        document.getElementById("saveAccountBtn").addEventListener("click", () => {
+            const formInputs = document.querySelectorAll("#formContent .form-input");
+            const resource = formInputs[0].value;
+            const username = formInputs[1].value;
+            const password = formInputs[2].value;
+
+            fetch("/account/add", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    [csrfHeader]: csrfToken // 🔐 CSRF protection
+                },
+                body: `resource=${encodeURIComponent(resource)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === "OK") {
+                    alert("Account saved successfully.");
+                    document.getElementById("middleContent").innerHTML = "";
+                } else {
+                    alert("Error: " + data);
+                }
+            })
+            .catch(error => {
+                console.error("Error saving account:", error);
+                alert("Failed to save account.");
+            });
+        });
+
+
 
         document.getElementById("entryType").addEventListener("change", function () {
             renderFormFields(this.value);

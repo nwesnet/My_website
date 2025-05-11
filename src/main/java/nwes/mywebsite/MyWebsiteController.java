@@ -2,6 +2,7 @@ package nwes.mywebsite;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 public class MyWebsiteController {
@@ -30,9 +31,9 @@ public class MyWebsiteController {
         return "preferences";
     }
 
-    @GetMapping("/passwordmanagerapp")
+    @GetMapping("/app/passwordmanagerapp")
     public String passwordmanagerapp() {
-        return "passwordmanagerapp";
+        return "app/passwordmanagerapp";
     }
     @GetMapping("/dictionaryapp")
     public String dictionaryapp() {
