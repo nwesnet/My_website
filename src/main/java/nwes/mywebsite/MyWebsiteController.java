@@ -35,9 +35,9 @@ public class MyWebsiteController {
     public String passwordmanagerapp() {
         return "app/passwordmanagerapp";
     }
-    @GetMapping("/dictionaryapp")
+    @GetMapping("/app/dictionaryapp")
     public String dictionaryapp() {
-        return "dictionaryapp";
+        return "app/dictionaryapp";
     }
 }
 
