@@ -7,21 +7,21 @@ import java.util.Optional;
 
 @Service
 public class AccountService {
-    private final AccountRepository repo;
+    private final AccountRepository accountRepository;
 
-    public AccountService(AccountRepository repo) {
-        this.repo = repo;
+    public AccountService(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
     }
     public void saveAccount(Account account) {
-        repo.save(account);
+        accountRepository.save(account);
     }
-    public void deletAccount(Long id){
-        repo.deleteById(id);
+    public void deleteAccount(Long id){
+        accountRepository.deleteById(id);
     }
     public List<Account> getAccountsByUser(User user) {
-        return repo.findByUser(user);
+        return accountRepository.findByUser(user);
     }
     public Optional<Account> find(Long id) {
-        return repo.findById(id);
+        return accountRepository.findById(id);
     }
 }

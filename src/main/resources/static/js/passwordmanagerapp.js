@@ -67,37 +67,84 @@ window.onload = function () {
         middleContent.innerHTML = '';
         middleContent.appendChild(formWrapper);
         renderFormFields(defaultType);
-        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
         document.getElementById("saveAccountBtn").addEventListener("click", () => {
+            const entryType = document.getElementById("entryType").value;
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
             const formInputs = document.querySelectorAll("#formContent .form-input");
-            const resource = formInputs[0].value;
-            const username = formInputs[1].value;
-            const password = formInputs[2].value;
 
-            fetch("/account/add", {
+            let url = "";
+            let body = "";
+
+            if (entryType === "Account") {
+                const resource = formInputs[0].value;
+                const username = formInputs[1].value;
+                const password = formInputs[2].value;
+
+                url = "/account/add-account";
+                body = `resource=${encodeURIComponent(resource)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+            }
+
+            else if (entryType === "Card") {
+                const resource = formInputs[0].value;
+                const cardNumber = formInputs[1].value;
+                const expiryDate = formInputs[2].value;
+                const ownerName = formInputs[3].value;
+                const cvv = formInputs[4].value;
+                const cardPin = formInputs[5].value;
+                const cardNetwork = formInputs[6].value;
+                const cardType = formInputs[7].value;
+
+                url = "/account/add-card";
+                body = `resource=${encodeURIComponent(resource)}&cardNumber=${encodeURIComponent(cardNumber)}&expiryDate=${encodeURIComponent(expiryDate)}&ownerName=${encodeURIComponent(ownerName)}&cvv=${encodeURIComponent(cvv)}&cardPin=${encodeURIComponent(cardPin)}&cardNetwork=${encodeURIComponent(cardNetwork)}&cardType=${encodeURIComponent(cardType)}`;
+            }
+            else if (entryType === "Link") {
+                const resource = formInputs[0].value;
+                const linkURL = formInputs[1].value;
+
+                url = "/account/add-link";
+                body = `resource=${encodeURIComponent(resource)}&linkURL=${encodeURIComponent(linkURL)}`;
+            }
+            else if (entryType === "Wallet") {
+                const resource = formInputs[0].value;
+                const keyWords = document.querySelector("#formContent textarea").value;
+                const address = formInputs[1].value;
+                const password = formInputs[2].value;
+
+                url = "/account/add-wallet";
+                body = `resource=${encodeURIComponent(resource)}&keyWords=${encodeURIComponent(keyWords)}&address=${encodeURIComponent(address)}&password=${encodeURIComponent(password)}`;
+            }
+
+            // Add more types here (Link, Wallet) as needed...
+
+            if (!url || !body) {
+                alert("Unsupported type.");
+                return;
+            }
+
+            fetch(url, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
-                    [csrfHeader]: csrfToken // 🔐 CSRF protection
+                    [csrfHeader]: csrfToken
                 },
-                body: `resource=${encodeURIComponent(resource)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                body: body
             })
             .then(response => response.text())
             .then(data => {
                 if (data === "OK") {
-                    alert("Account saved successfully.");
+                    alert(`${entryType} saved successfully.`);
                     document.getElementById("middleContent").innerHTML = "";
                 } else {
                     alert("Error: " + data);
                 }
             })
             .catch(error => {
-                console.error("Error saving account:", error);
-                alert("Failed to save account.");
+                console.error("Error saving entry:", error);
+                alert("Failed to save.");
             });
         });
+
 
 
 
@@ -239,13 +286,21 @@ window.onload = function () {
         document.querySelectorAll(".tab-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 const type = btn.getAttribute("data-type");
-                if (type === "Account") loadAccountList();
+                if (type === "Account") {
+                    loadAccountList();
+                } else if (type == "Card") {
+                    loadCardList();
+                } else if (type == "Link") {
+                    loadLinkList();
+                } else if (type == "Wallet") {
+                    loadWalletList();
+                }
                 else document.getElementById("listContent").innerHTML = `<p>Coming soon: ${type}</p>`;
             });
         });
     }
     function loadAccountList() {
-        fetch("/account/list")
+        fetch("/account/list-accounts")
             .then(response => response.json())
             .then(data => {
                 const listContent = document.getElementById("listContent");
@@ -289,6 +344,147 @@ window.onload = function () {
                 document.getElementById("listContent").innerHTML = "<p>Error loading accounts.</p>";
             });
     }
+    function loadCardList() {
+        fetch("/account/list-cards")
+            .then(response => response.json())
+            .then(data => {
+                const listContent = document.getElementById("listContent");
+                listContent.innerHTML = '';
+
+                if (data.length === 0) {
+                    listContent.innerHTML = "<p>No cards saved.</p>";
+                    return;
+                }
+
+                data.forEach(card => {
+                    const row = document.createElement("div");
+                    row.style.marginBottom = "20px";
+                    row.innerHTML = `
+                        <label class="form-label">Resource:</label>
+                        <input class="form-input" type="text" value="${card.resource}" readonly><br>
+
+                        <label class="form-label">Card Number:</label>
+                        <input class="form-input" type="text" value="${card.cardNumber}" readonly><br>
+
+                        <label class="form-label">Expiry Date:</label>
+                        <input class="form-input" type="text" value="${card.expiryDate}" readonly><br>
+
+                        <label class="form-label">Owner:</label>
+                        <input class="form-input" type="text" value="${card.ownerName}" readonly><br>
+
+                        <label class="form-label">CVV:</label>
+                        <input class="form-input" type="password" value="${card.cvv}" readonly><br>
+
+                        <label class="form-label">PIN:</label>
+                        <input class="form-input" type="password" value="${card.cardPin}" readonly><br>
+
+                        <label class="form-label">Pay Network:</label>
+                        <input class="form-input" type="text" value="${card.cardNetwork}" readonly><br>
+
+                        <label class="form-label">Card Type:</label>
+                        <input class="form-input" type="text" value="${card.cardType}" readonly><br>
+
+                        <button class="form-button toggle-btn">👁️</button>
+                        <hr style="margin-top: 20px;">
+                    `;
+
+                    listContent.appendChild(row);
+
+                    const toggleBtn = row.querySelector(".toggle-btn");
+                    const passwordInputs = row.querySelectorAll('input[type="password"]');
+
+                    toggleBtn.addEventListener("click", () => {
+                        passwordInputs.forEach(input => {
+                            input.type = input.type === "password" ? "text" : "password";
+                        });
+                    });
+                });
+            })
+            .catch(err => {
+                console.error("Failed to load cards:", err);
+                document.getElementById("listContent").innerHTML = "<p>Error loading cards.</p>";
+            });
+    }
+    function loadLinkList() {
+        fetch("/account/list-links")
+            .then(response => response.json())
+            .then(data => {
+                const listContent = document.getElementById("listContent");
+                listContent.innerHTML = '';
+
+                if(data.length == 0) {
+                    listContent.innerHTML = "<p>No links saved.</p>";
+                    return;
+                }
+
+                data.forEach(link => {
+                    const row = document.createElement("div");
+                    row.style.marginBottom = "20px";
+                    row.innerHTML = `
+                        <label class="form-label">Resource:</label>
+                        <input class="form-input" type="text" value="${link.resource}" readonly><br>
+
+                        <label class="form-label">Link:</label>
+                        <input class="form-input" type="text" value="${link.link}" readonly><br>
+
+                        <hr style="margin-top: 20px;">
+                    `;
+                    listContent.appendChild(row);
+
+
+                });
+            })
+            .catch(err => {
+                console.error("Failed to load links:", err);
+                document.getElementById("listContent").innerHTML = "<p>Error loading links.</p>";
+            });
+    }
+    function loadWalletList() {
+        fetch("/account/list-wallets")
+            .then(response => response.json())
+            .then(data => {
+                const listContent = document.getElementById("listContent");
+                listContent.innerHTML = '';
+
+                if(data.length === 0) {
+                    listContent.innerHTML = "<p>No wallets saved.</p>";
+                    return;
+                }
+
+                data.forEach(wallet => {
+                    const row = document.createElement("div");
+                    row.style.marginBottom = "20px";
+                    row.innerHTML = `
+                        <label class="form-label">Resource:</label>
+                        <input class="form-input" type="text" value="${wallet.resource}" readonly><br>
+
+                        <label class="form-label">Key words:</label>
+                        <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea><br>
+
+                        <label class="form-label">Address:</label>
+                        <input class="form-input" type="text" value="${wallet.address}" readonly><br>
+
+                        <label class="form-label">Password:</label>
+                        <input class="form-input" text="password" value="${wallet.password}" readonly><br>
+                        <button class="form-button toggle-btn">👁️</button>
+                        <hr style="margin-top: 20px;">
+                    `;
+                    listContent.appendChild(row);
+
+                    const toggleBtn = row.querySelector(".toggle-btn");
+                    const passwordInput = row.querySelector('input[type="password"]');
+                    toggleBtn.addEventListener("click", () => {
+                        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+                    });
+                });
+
+            })
+            .catch(err => {
+                console.error("Failed to load wallets:", err);
+                document.getElementById("listContent").innerHTML = "<p>Error loading wallets.</p>";
+            });
+    }
+
 
 
     function renderPreferencesUI() {
