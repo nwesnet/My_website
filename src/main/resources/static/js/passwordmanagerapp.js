@@ -315,13 +315,24 @@ window.onload = function () {
                     const row = document.createElement("div");
                     row.style.marginBottom = "20px";
                     row.innerHTML = `
-                        <label class="form-label">Resource:</label>
-                        <input class="form-input" type="text" value="${account.resource}" readonly><br>
-                        <label class="form-label">Login:</label>
-                        <input class="form-input" type="text" value="${account.username}" readonly><br>
-                        <label class="form-label">Password:</label>
-                        <input class="form-input" type="password" value="${account.password}" readonly>
-                        <button class="form-button toggle-btn">👁️</button>
+                        <div class="horizontal-group">
+                            <label class="form-label">Resource:</label>
+                            <input class="form-input" type="text" value="${account.resource}" readonly>
+                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Login:</label>
+                            <input class="form-input" type="text" value="${account.username}" readonly>
+                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Password:</label>
+                            <input class="form-input" type="password" value="${account.password}" readonly>
+                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                        </div>
+
                         <hr style="margin-top: 20px;">
                     `;
 
@@ -360,31 +371,45 @@ window.onload = function () {
                     const row = document.createElement("div");
                     row.style.marginBottom = "20px";
                     row.innerHTML = `
-                        <label class="form-label">Resource:</label>
-                        <input class="form-input" type="text" value="${card.resource}" readonly><br>
+                        <div class="horizontal-group">
+                            <label class="form-label">Resource:</label>
+                            <input class="form-input" type="text" value="${card.resource}" readonly>
+                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Number:</label>
+                            <input class="form-input" type="text" value="${card.cardNumber}" readonly>
+                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Date:</label>
+                            <input class="form-input" type="text" value="${card.expiryDate}" readonly>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Owner:</label>
+                            <input class="form-input" type="text" value="${card.ownerName}" readonly>
+                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">CVV:</label>
+                            <input class="form-input" type="password" value="${card.cvv}" readonly>
+                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Pincode:</label>
+                            <input class="form-input" type="password" value="${card.cardPin}" readonly>
+                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Network:</label>
+                            <input class="form-input" type="text" value="${card.cardNetwork}" readonly>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Type:</label>
+                            <input class="form-input" type="text" value="${card.cardType}" readonly>
+                        </div>
 
-                        <label class="form-label">Card Number:</label>
-                        <input class="form-input" type="text" value="${card.cardNumber}" readonly><br>
-
-                        <label class="form-label">Expiry Date:</label>
-                        <input class="form-input" type="text" value="${card.expiryDate}" readonly><br>
-
-                        <label class="form-label">Owner:</label>
-                        <input class="form-input" type="text" value="${card.ownerName}" readonly><br>
-
-                        <label class="form-label">CVV:</label>
-                        <input class="form-input" type="password" value="${card.cvv}" readonly><br>
-
-                        <label class="form-label">PIN:</label>
-                        <input class="form-input" type="password" value="${card.cardPin}" readonly><br>
-
-                        <label class="form-label">Pay Network:</label>
-                        <input class="form-input" type="text" value="${card.cardNetwork}" readonly><br>
-
-                        <label class="form-label">Card Type:</label>
-                        <input class="form-input" type="text" value="${card.cardType}" readonly><br>
-
-                        <button class="form-button toggle-btn">👁️</button>
                         <hr style="margin-top: 20px;">
                     `;
 
@@ -421,11 +446,17 @@ window.onload = function () {
                     const row = document.createElement("div");
                     row.style.marginBottom = "20px";
                     row.innerHTML = `
-                        <label class="form-label">Resource:</label>
-                        <input class="form-input" type="text" value="${link.resource}" readonly><br>
-
-                        <label class="form-label">Link:</label>
-                        <input class="form-input" type="text" value="${link.link}" readonly><br>
+                        <div class="horizontal-group">
+                            <label class="form-label">Resource:</label>
+                            <input class="form-input" type="text" value="${link.resource}">
+                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Link:</label>
+                            <input class="form-input" type="text" value="${link.link}">
+                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                        </div>
 
                         <hr style="margin-top: 20px;">
                     `;
@@ -455,18 +486,26 @@ window.onload = function () {
                     const row = document.createElement("div");
                     row.style.marginBottom = "20px";
                     row.innerHTML = `
-                        <label class="form-label">Resource:</label>
-                        <input class="form-input" type="text" value="${wallet.resource}" readonly><br>
-
+                        <div class="horizontal-group">
+                            <label class="form-label">Resource:</label>
+                            <input class="form-input" type="text" value="${wallet.resource}" readonly>
+                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                        </div>
                         <label class="form-label">Key words:</label>
-                        <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea><br>
+                        <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea>
+                        <div class="horizontal-group">
+                            <label class="form-label">Address:</label>
+                            <input class="form-input" type="text" value="${wallet.address}" readonly>
+                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                        </div>
+                        <div class="horizontal-group">
+                            <label class="form-label">Password:</label>
+                            <input class="form-input" type="password" value="${wallet.password}" readonly>
+                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                        </div>
 
-                        <label class="form-label">Address:</label>
-                        <input class="form-input" type="text" value="${wallet.address}" readonly><br>
-
-                        <label class="form-label">Password:</label>
-                        <input class="form-input" text="password" value="${wallet.password}" readonly><br>
-                        <button class="form-button toggle-btn">👁️</button>
                         <hr style="margin-top: 20px;">
                     `;
                     listContent.appendChild(row);
