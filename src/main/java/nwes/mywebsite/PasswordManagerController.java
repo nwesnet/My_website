@@ -149,6 +149,40 @@ public class PasswordManagerController {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         return walletService.getWalletsByUser(user);
     }
+    @PostMapping("/update-account")
+    @ResponseBody
+    public String updateAccount(
+            @RequestParam Long id,
+            @RequestParam String resource,
+            @RequestParam String username,
+            @RequestParam String password,
+            Principal principal
+    ) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+        Account account = accountService.find(id).orElseThrow(() -> new RuntimeException("Account not found"));
+        if(!account.getUser().getId().equals(user.getId())){
+            return "Unauthorized";
+        }
+        account.setResource(resource);
+        account.setUsername(username);
+        account.setPassword(password);
+        accountService.saveAccount(account);
+
+        return "OK";
+    }
+    @DeleteMapping("/delete-account/{id}")
+    @ResponseBody
+    public String deleteAccount(@PathVariable Long id, Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Account account = accountService.find(id).orElseThrow(() -> new RuntimeException("Account not found"));
+        if(!account.getUser().getId().equals(user.getId())) {
+            return "Unauthorized";
+        }
+        accountService.deleteAccount(id);
+        return "OK";
+    }
 
 
 }

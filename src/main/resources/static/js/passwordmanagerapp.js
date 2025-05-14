@@ -318,19 +318,19 @@ window.onload = function () {
                         <div class="horizontal-group">
                             <label class="form-label">Resource:</label>
                             <input class="form-input" type="text" value="${account.resource}" readonly>
-                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
                         </div>
                         <div class="horizontal-group">
                             <label class="form-label">Login:</label>
                             <input class="form-input" type="text" value="${account.username}" readonly>
-                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
                         </div>
                         <div class="horizontal-group">
                             <label class="form-label">Password:</label>
                             <input class="form-input" type="password" value="${account.password}" readonly>
                             <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
                         </div>
 
                         <hr style="margin-top: 20px;">
@@ -342,11 +342,43 @@ window.onload = function () {
                     const toggleBtn = row.querySelector(".toggle-btn");
                     const passwordInput = row.querySelector('input[type="password"]');
                     toggleBtn.addEventListener("click", () => {
-                        if (passwordInput.type === "password") {
-                            passwordInput.type = "text";
-                        } else {
-                            passwordInput.type = "password";
+                        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+                    });
+                    // Add handle copy buttons
+                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                        copyBtn.addEventListener("click", () => {
+                            const input = copyBtn.parentElement.querySelector("input");
+                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                        });
+                    });
+                    // Add delete button
+                    const deleteBtn = row.querySelector(".delete-btn");
+                    deleteBtn.addEventListener("click", () => {
+                        if(confirm(`Are you sure you want to delete account on resource "${account.resource}"?`)) {
+                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                            fetch(`/account/delete-account/${account.id}`, {
+                                method: "DELETE",
+                                headers: {
+                                    [csrfHeader]: csrfToken
+                                }
+                            })
+                            .then(response => response.text())
+                            .then(data => {
+                                if(data === "OK") {
+                                    row.remove();
+                                    alert("Account deleted.");
+                                } else {
+                                    alert("Failed to delete: " + data);
+                                }
+                            });
                         }
+                    });
+                    // Add edit button
+                    const editBtn = row.querySelector(".edit-btn");
+                    editBtn.addEventListener("click", () => {
+                        showDialog(account);
                     });
                 });
             })
@@ -596,6 +628,74 @@ window.onload = function () {
     [2025-04-02 11:02:31]
     `;
         document.getElementById("logText").value = sampleLogs.trim();
+    }
+
+    // Dialog window
+    function showDialog(account) {
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.zIndex = "9999";
+
+        const dialog = document.createElement("div");
+        dialog.style.backgroundColor = "#222";
+        dialog.style.padding = "30px";
+        dialog.style.borderRadius = "10px";
+        dialog.style.width = "400px";
+
+        dialog.innerHTML = `
+            <h3>Edit account</h3>
+            <label class="form-label">Resource:</label>
+            <input id="editResource" class="form-input" value="${account.resource}"><br>
+            <label class="form-label">Login:</label>
+            <input id="editUsername" class="form-input" value="${account.username}"><br>
+            <label class="form-label">Password:</label>
+            <input id="editPassword" class="form-input" type="text" value="${account.password}"><br><br>
+            <button id="saveEditBtn" class="form-button">Save</button>
+            <button id="cancelEditBtn" class="form-button">Cancel</button>
+        `;
+
+        overlay.append(dialog);
+        document.body.appendChild(overlay);
+
+        document.getElementById("cancelEditBtn").addEventListener("click", () => {
+            overlay.remove();
+        });
+
+        document.getElementById("saveEditBtn").addEventListener("click", () => {
+            const resource = document.getElementById("editResource").value;
+            const username = document.getElementById("editUsername").value;
+            const password = document.getElementById("editPassword").value;
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch("/account/update-account", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    [csrfHeader]: csrfToken
+                },
+                body: `id=${account.id}&resource=${encodeURIComponent(resource)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                if(data === "OK") {
+                    alert("Account updated successfully.");
+                    overlay.remove();
+                    loadAccountList();
+                } else {
+                    alert("Error: " + data);
+                }
+            });
+        });
     }
 
 };
