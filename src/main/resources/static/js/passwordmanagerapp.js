@@ -1,4 +1,16 @@
 window.onload = function () {
+    // ✅ Apply saved theme
+        fetch("/settings")
+            .then(response => response.json())
+            .then(data => {
+                const theme = data.theme;
+                const themeLink = document.getElementById("theme-style");
+                if (theme === "light") {
+                    themeLink.href = "/css/light.css";
+                } else {
+                    themeLink.href = "/css/dark.css";
+                }
+            });
     const middleContent = document.getElementById("middleContent");
 
     // Handle sidebar button clicks
@@ -592,7 +604,11 @@ window.onload = function () {
                         <button class="form-button">Clear logs</button>
                     `;
                 } else if (tabType === "theme") {
-                    toggleTheme();
+                    prefsContent.innerHTML = `
+                        <label class="form-label">Click to switch the theme:</label><br>
+                        <button class="form-button" id="themeSwitchBtn">Switch Theme</button>
+                    `;
+                    document.getElementById("themeSwitchBtn").addEventListener("click", toggleTheme);
                 }
             });
         });
@@ -600,8 +616,33 @@ window.onload = function () {
 
     // Optional theme toggler stub
     function toggleTheme() {
-        alert("Theme toggled! (placeholder)");
+        const themeLink = document.getElementById("theme-style");
+        const currentHref = themeLink.getAttribute("href");
+        const newTheme = currentHref.includes("dark.css") ? "light" : "dark";
+        themeLink.setAttribute("href", `/css/${newTheme}.css`);
+
+        // Save to MongoDB
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch("/settings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({ theme: newTheme })
+        })
+        .then(response => response.text())
+        .then(result => {
+            if (result === "OK") {
+                console.log("Theme saved:", newTheme);
+            } else {
+                alert("Failed to save theme.");
+            }
+        });
     }
+
 
     const logsToggle = document.getElementById("logsToggle");
     const logsPanel = document.getElementById("logsPanel");
