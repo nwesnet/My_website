@@ -1,260 +1,52 @@
-/* ========= GLOBAL VARIABLES ============================================= */
-
 :root {
-    --bg: #000;
-    --card: #111;
-    --card-alt: #222;
-    --card-alt-hover: #333;
-    --accent: #2ecc71;
-    --text: #fff;
-    --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
-    --radius: 4px;
-    --trans-fast: 0.15s ease;
-    --trans-med: 0.3s ease;
+    /* === GLOBAL COLORS === */
+    --bg: #000;                  /* Main background */
+    --card: #111;                /* Main card/section backgrounds */
+    --card-alt: #222;            /* Button backgrounds, nav items, etc */
+    --card-alt-hover: #333;      /* Button/nav hover backgrounds */
 
-    --hero-max-h: 600px;
-    --thumb-h: 80px;
+    /* === ACCENT (Purple) === */
+    --accent: #bb6bd9;           /* Main accent (purple) for buttons/links/nav highlights */
+    --accent-hover: #a259c4;     /* Accent for hover */
+
+    /* === TEXT === */
+    --text: #fff;                /* Main text color */
+
+    /* === SHADOWS === */
+    --shadow: 0 4px 16px rgba(0,0,0,0.45);      /* For cards/images/footer */
+    --nav-shadow: 0 2px 5px rgba(255,255,255,0.05); /* Navbar subtle shadow */
+
+    /* === NAVBAR === */
+    --nav-bg: var(--bg);                 /* Navbar background */
+    --nav-text: var(--text);             /* Navbar text color */
+    --nav-card: var(--card);             /* Dropdown in navbar */
+    --nav-card-alt: var(--card-alt);     /* Navbar button background */
+    --nav-card-alt-hover: var(--card-alt-hover); /* Navbar button hover */
+
+    /* === BUTTONS & RADIUS === */
+    --button-radius: 50px;         /* Pills for nav/buttons */
+    --dropdown-radius: 4px;        /* Dropdown menus */
+
+    /* === MAIN CONTENT === */
+    --main-bg: var(--bg);          /* Main page background */
+    --main-text: var(--text);      /* Main page text */
+
+    /* === SHOWCASE === */
+    --hero-max-h: 600px;           /* Max height for showcase images */
+    --thumb-h: 80px;               /* Thumbnail image height */
+
+    /* === FOOTER === */
+    --footer-bg: var(--card);      /* Footer background */
+    --footer-text: var(--text);    /* Footer text color */
 }
-
-/* ========= RESET & BODY ================================================= */
-
 html, body {
-    margin: 0;
-    padding: 0;
-    border: 0;
+    background: var(--main-bg);
+    color: var(--main-text);
     font-size: 26px;
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
+    margin: 0;
+    padding: 0;
 }
-
-/* ========= HEADER & NAVBAR ============================================= */
-
-#header {
-    height: 60px;
-    background-color: var(--bg);
-    display: flex;
-    align-items: center;
-    font-size: 26px;
-    color: var(--text);
-    box-shadow: 0 2px 5px rgba(255, 255, 255, 0.05);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
-#headerSpaceLeft,
-#headerSpaceRight {
-    width: 15%;
-    height: 100%;
-}
-
-#nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-grow: 1;
-}
-
-.nav-left,
-.nav-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.auth-buttons {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-/* Logout button styled like a nav-item link */
-.logout-button {
-    background: none;
-    border: none;
-    padding: 10px 18px;
-    color: var(--text);
-    font-size: inherit;
-    font-family: inherit;
-    cursor: pointer;
-    border-radius: 50px;
-    transition: background var(--trans-fast);
-}
-
-.logout-button:hover,
-.logout-button:focus-visible {
-    background: var(--card-alt-hover);
-    outline: none;
-}
-
-
-.nav-item {
-    padding: 10px 18px;
-    display: inline-block;
-    color: var(--text);
-    background: var(--card-alt);
+a {
     text-decoration: none;
-    border-radius: 50px;
-    transition: background var(--trans-fast);
-}
-
-.nav-item:hover,
-.nav-item:focus-visible {
-    background: var(--card-alt-hover);
-    outline: none;
-}
-
-/* ========= DROPDOWN ===================================================== */
-
-.dropdown {
-    position: relative;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: var(--card);
-    top: 100%;
-    left: 0;
-    min-width: 220px;
-    flex-direction: column;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    z-index: 999;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition:
-        opacity var(--trans-med),
-        transform var(--trans-med),
-        visibility 0s linear 0.2s;
-}
-
-.dropdown:hover .dropdown-content,
-.dropdown:focus-within .dropdown-content {
-    display: flex;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    transition-delay: 0s;
-}
-
-.dropdown-content a {
-    padding: 12px 18px;
-    color: var(--text);
-    text-decoration: none;
-    border-bottom: 1px solid var(--card-alt-hover);
-    transition: background var(--trans-fast);
-}
-
-.dropdown-content a:hover,
-.dropdown-content a:focus-visible {
-    background: var(--card-alt-hover);
-    outline: none;
-}
-
-.dropdown-content a:last-child {
-    border-bottom: none;
-}
-
-/* ========= MAIN CONTENT ================================================= */
-
-.main {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 0 20px;
-    text-align: center;
-}
-
-/* ========= SHOWCASE CARDS ============================================== */
-
-.showcase {
-    margin-bottom: 60px;
-    padding: 30px 0;
-}
-
-/* MAIN (HERO) IMAGE */
-.showcase img[id^="mainImage"] {
-    width: 100%;
-    height: calc(100vh - 320px);
-    max-height: var(--hero-max-h);
-    object-fit: contain;
-    background: var(--bg);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-}
-
-/* THUMBNAIL BAR */
-.thumbnail-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 16px;
-}
-
-.thumbnails {
-    display: flex;
-    overflow-x: auto;
-    gap: 10px;
-    padding: 10px;
-}
-
-.thumbnails img {
-    height: var(--thumb-h);
-    width: calc(var(--thumb-h) * 1.66);
-    object-fit: cover;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 2px solid var(--card-alt-hover);
-    transition: border var(--trans-fast);
-}
-
-.thumbnails img:hover {
-    border-color: var(--accent);
-}
-
-/* SCROLL ARROWS */
-.scroll-btn {
-    flex-shrink: 0;
-    background: var(--card-alt);
-    color: var(--text);
-    border: none;
-    font-size: 20px;
-    padding: 10px 14px;
-    border-radius: var(--radius);
-    margin: 0 10px;
-    cursor: pointer;
-    transition: background var(--trans-fast);
-}
-
-.scroll-btn:hover {
-    background: var(--card-alt-hover);
-}
-
-/* VISIT PROJECT BUTTON */
-.project-link {
-    margin-top: 20px;
-    display: inline-block;
-    background: var(--accent);
-    color: var(--text);
-    padding: 12px 24px;
-    text-decoration: none;
-    border-radius: 30px;
-    font-size: 18px;
-    font-weight: bold;
-    transition: background var(--trans-fast);
-}
-
-.project-link:hover {
-    background: #27ae60;
-}
-
-/* ========= FOOTER ======================================================= */
-
-footer {
-    background: var(--bg);
-    text-align: center;
-    padding: 0px;
-    font-size: 16px;
-    border-top: 1px solid var(--card);
 }
