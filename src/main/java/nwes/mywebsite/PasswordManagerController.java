@@ -14,13 +14,15 @@ public class PasswordManagerController {
     private final CardService cardService;
     private final LinkService linkService;
     private final WalletService walletService;
+    private final LogService logService;
     private final UserRepository userRepository;
 
-    public PasswordManagerController(AccountService accountService,CardService cardService, LinkService linkService, WalletService walletService, UserRepository userRepository) {
+    public PasswordManagerController(AccountService accountService,CardService cardService, LinkService linkService, WalletService walletService, LogService logService, UserRepository userRepository) {
         this.accountService = accountService;
         this.cardService = cardService;
         this.linkService = linkService;
         this.walletService = walletService;
+        this.logService = logService;
         this.userRepository = userRepository;
     }
 
@@ -43,6 +45,8 @@ public class PasswordManagerController {
         account.setDateAdded(LocalDateTime.now());
 
         accountService.saveAccount(account);
+
+        logService.log(user, "[web] Added Account for " + resource);
 
         return "OK";
     }
@@ -169,6 +173,8 @@ public class PasswordManagerController {
         account.setPassword(password);
         accountService.saveAccount(account);
 
+        logService.log(user, "[web] Edited Account for " + resource);
+
         return "OK";
     }
     @DeleteMapping("/delete-account/{id}")
@@ -181,6 +187,25 @@ public class PasswordManagerController {
             return "Unauthorized";
         }
         accountService.deleteAccount(id);
+        logService.log(user, "[web] Deleted Account for " + account.getResource());
+        return "OK";
+    }
+    @GetMapping("/logs")
+    @ResponseBody
+    public List<String> getLogs(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return logService.getLogsForUser(user).stream()
+                .map(entry -> entry.getLogText() + " [" + entry.getLocalDateTime().toString() + "]")
+                .toList();
+    }
+    @GetMapping("/clear-logs")
+    @ResponseBody
+    public String clearLogs(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        logService.clearLogs(user);
+        logService.log(user, "[web] The history was cleared");
         return "OK";
     }
 

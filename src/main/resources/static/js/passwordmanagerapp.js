@@ -601,8 +601,35 @@ window.onload = function () {
                     prefsContent.innerHTML = `
                         <button class="form-button">Double confirmation</button>
                         <button class="form-button">Store logs</button>
-                        <button class="form-button">Clear logs</button>
+                        <button class="form-button" id="clearLogsBtn">Clear logs</button>
                     `;
+                    document.getElementById("clearLogsBtn").addEventListener("click", function(){
+                        if(confirm("Are you sure you want to clear all logs?")) {
+                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                            fetch("/account/clear-logs", {
+                                method: "GET",
+                                headers: {
+                                    [csrfHeader]: csrfToken
+                                }
+                            })
+                            .then(response => response.text())
+                            .then(data => {
+                                if(data === "OK") {
+                                    alert("Logs cleared!");
+                                    if(document.getElementById("logsPanel") && !document.getElementById("logsPanel").classList.contains("hidden")) {
+                                        loadLogs();
+                                    }
+                                } else {
+                                    alert("Failed to clear logs: " + data);
+                                }
+                            })
+                            .catch(error => {
+                                alert("Request failed: " + error);
+                            });
+                        }
+                    });
                 } else if (tabType === "theme") {
                     prefsContent.innerHTML = `
                         <label class="form-label">Click to switch the theme:</label><br>
@@ -657,19 +684,16 @@ window.onload = function () {
 
     // Simulated log loader (in real app this would fetch from a file)
     function loadLogs() {
-        const sampleLogs = `
-    The history was cleared at [2025-04-02 09:07:18]
-    Login [2025-04-02 09:42:34]
-    Added Account for testgenpsswd
-    Added Card for testgenpsswd
-    Added Link for testgenpsswd
-    [2025-04-02 10:53:28]
-    [2025-04-02 11:00:29]
-    [2025-04-02 11:01:37]
-    [2025-04-02 11:02:31]
-    `;
-        document.getElementById("logText").value = sampleLogs.trim();
+        fetch("/account/logs")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("logText").value = data.join('\n');
+            })
+            .catch(err => {
+                document.getElementById("logText").value = "Failed to load logs.";
+            });
     }
+
 
     // Dialog window
     function showDialog(account) {
