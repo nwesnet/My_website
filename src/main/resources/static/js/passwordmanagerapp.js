@@ -390,7 +390,7 @@ window.onload = function () {
                     // Add edit button
                     const editBtn = row.querySelector(".edit-btn");
                     editBtn.addEventListener("click", () => {
-                        showDialog(account);
+                        showAccountDialog(account);
                     });
                 });
             })
@@ -418,13 +418,13 @@ window.onload = function () {
                         <div class="horizontal-group">
                             <label class="form-label">Resource:</label>
                             <input class="form-input" type="text" value="${card.resource}" readonly>
-                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
                         </div>
                         <div class="horizontal-group">
                             <label class="form-label">Number:</label>
                             <input class="form-input" type="text" value="${card.cardNumber}" readonly>
-                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
                         </div>
                         <div class="horizontal-group">
                             <label class="form-label">Date:</label>
@@ -433,7 +433,7 @@ window.onload = function () {
                         <div class="horizontal-group">
                             <label class="form-label">Owner:</label>
                             <input class="form-input" type="text" value="${card.ownerName}" readonly>
-                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
                         </div>
                         <div class="horizontal-group">
                             <label class="form-label">CVV:</label>
@@ -458,14 +458,47 @@ window.onload = function () {
                     `;
 
                     listContent.appendChild(row);
-
-                    const toggleBtn = row.querySelector(".toggle-btn");
+                    // Copy buttons
+                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                        copyBtn.addEventListener("click", () => {
+                            const input = copyBtn.parentElement.querySelector("input");
+                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                        });
+                    });
+                    // Toggle password visibility ( CVV & PIN )
+                    const toggleBtns = row.querySelectorAll(".toggle-btn");
                     const passwordInputs = row.querySelectorAll('input[type="password"]');
-
-                    toggleBtn.addEventListener("click", () => {
-                        passwordInputs.forEach(input => {
+                    toggleBtns.forEach((toggleBtn, idx) => {
+                        toggleBtn.addEventListener("click", () => {
+                            const input = passwordInputs[idx];
                             input.type = input.type === "password" ? "text" : "password";
                         });
+                    });
+                    // Delete card
+                    const deleteBtn = row.querySelector(".delete-btn");
+                    deleteBtn.addEventListener("click", () => {
+                        if(confirm(`Are you sure you want to delete card for resource "${card.resource}"?`)) {
+                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                            fetch(`/account/delete-card/${card.id}`, {
+                                method: "DELETE",
+                                headers: { [csrfHeader]: csrfToken }
+                            })
+                            .then(response => response.text())
+                            .then(data => {
+                                if(data === "OK") {
+                                    row.remove();
+                                    alert("Card deleted.");
+                                } else {
+                                    alert("Failed to delete: " + data);
+                                }
+                            });
+                        }
+                    });
+                    // Edit card
+                    const editBtn = row.querySelector(".edit-btn");
+                    editBtn.addEventListener("click", () => {
+                        showCardDialog(card);
                     });
                 });
             })
@@ -695,8 +728,9 @@ window.onload = function () {
     }
 
 
-    // Dialog window
-    function showDialog(account) {
+    // Dialog windows
+    // Account dialog
+    function showAccountDialog(account) {
         const overlay = document.createElement("div");
         overlay.style.position = "fixed";
         overlay.style.top = "0";
@@ -756,6 +790,86 @@ window.onload = function () {
                     alert("Account updated successfully.");
                     overlay.remove();
                     loadAccountList();
+                } else {
+                    alert("Error: " + data);
+                }
+            });
+        });
+    }
+    // Card dialog
+    function showCardDialog(card) {
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.zIndex = "9999";
+
+        const dialog = document.createElement("div");
+        dialog.style.backgroundColor = "#222";
+        dialog.style.padding = "30px";
+        dialog.style.borderRadius = "10px";
+        dialog.style.width = "420px";
+        dialog.innerHTML = `
+            <h3>Edit Card</h3>
+            <label class="form-label">Resource:</label>
+            <input id="editResource" class="form-input" value="${card.resource}"><br>
+            <label class="form-label">Number:</label>
+            <input id="editNumber" class="form-input" value="${card.cardNumber}"><br>
+            <label class="form-label">Date:</label>
+            <input id="editDate" class="form-input" value="${card.expiryDate}"><br>
+            <label class="form-label">CVV:</label>
+            <input id="editCvv" class="form-input" type="text" value="${card.cvv}"><br>
+            <label class="form-label">Owner:</label>
+            <input id="editOwner" class="form-input" value="${card.ownerName}"><br>
+            <label class="form-label">PIN:</label>
+            <input id="editPin" class="form-input" type="text" value="${card.cardPin}"><br>
+            <label class="form-label">Pay Network:</label>
+            <input id="editNetwork" class="form-input" value="${card.cardNetwork}"><br>
+            <label class="form-label">Card Type:</label>
+            <input id="editType" class="form-input" value="${card.cardType}"><br><br>
+            <button id="saveEditCardBtn" class="form-button">Save</button>
+            <button id="cancelEditCardBtn" class="form-button">Cancel</button>
+        `;
+        overlay.append(dialog);
+        document.body.appendChild(overlay);
+
+        document.getElementById("cancelEditCardBtn").addEventListener("click", () => {
+            overlay.remove();
+        });
+
+        document.getElementById("saveEditCardBtn").addEventListener("click", () => {
+            const resource = document.getElementById("editResource").value;
+            const number = document.getElementById("editNumber").value;
+            const date = document.getElementById("editDate").value;
+            const cvv = document.getElementById("editCvv").value;
+            const owner = document.getElementById("editOwner").value;
+            const pin = document.getElementById("editPin").value;
+            const network = document.getElementById("editNetwork").value;
+            const type = document.getElementById("editType").value;
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch("/account/update-card", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    [csrfHeader]: csrfToken
+                },
+                body: `id=${card.id}&resource=${encodeURIComponent(resource)}&cardNumber=${encodeURIComponent(number)}&expiryDate=${encodeURIComponent(date)}&cvv=${encodeURIComponent(cvv)}&ownerName=${encodeURIComponent(owner)}&cardPin=${encodeURIComponent(pin)}&cardNetwork=${encodeURIComponent(network)}&cardType=${encodeURIComponent(type)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                if(data === "OK") {
+                    alert("Card updated successfully.");
+                    overlay.remove();
+                    loadCardList();
                 } else {
                     alert("Error: " + data);
                 }

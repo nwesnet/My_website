@@ -190,6 +190,54 @@ public class PasswordManagerController {
         logService.log(user, "[web] Deleted Account for " + account.getResource());
         return "OK";
     }
+    @PostMapping("/update-card")
+    @ResponseBody
+    public String updateCard(
+            @RequestParam Long id,
+            @RequestParam String resource,
+            @RequestParam String cardNumber,
+            @RequestParam String expiryDate,
+            @RequestParam String cvv,
+            @RequestParam String ownerName,
+            @RequestParam String cardPin,
+            @RequestParam String cardNetwork,
+            @RequestParam String cardType,
+            Principal principal
+    ) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Card card = cardService.find(id).orElseThrow(() -> new RuntimeException("Card not found"));
+        if(!card.getUser().getId().equals(user.getId())) {
+            return "Unauthorized";
+        }
+        card.setResource(resource);
+        card.setCardNumber(cardNumber);
+        card.setExpiryDate(expiryDate);
+        card.setCvv(cvv);
+        card.setOwnerName(ownerName);
+        card.setCardPin(cardPin);
+        card.setCardNetwork(cardNetwork);
+        card.setCardType(cardType);
+
+        cardService.saveCard(card);
+
+        logService.log(user, "[web] Edited card for " + resource);
+
+        return "OK";
+    }
+    @DeleteMapping("/delete-card/{id}")
+    @ResponseBody
+    public String deleteCard(@PathVariable Long id, Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Card card = cardService.find(id).orElseThrow(() -> new RuntimeException("Card not found"));
+        if(!card.getUser().getId().equals(user.getId())) {
+            return "Unauthorized";
+        }
+        cardService.deleteCard(id);
+        logService.log(user, "[web] Deleted card for " + card.getResource());
+        return "OK";
+    }
     @GetMapping("/logs")
     @ResponseBody
     public List<String> getLogs(Principal principal) {
