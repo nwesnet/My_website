@@ -284,6 +284,9 @@ window.onload = function () {
     function renderShowListUI() {
         middleContent.innerHTML = `
             <div style="margin-bottom: 16px;">
+                <input type="text" id="showListSearch" class="showlist-search" placeholder="Search...">
+            </div>
+            <div style="margin-bottom: 16px;">
                 <button class="form-button tab-btn" data-type="Account">Accounts</button>
                 <button class="form-button tab-btn" data-type="Card">Cards</button>
                 <button class="form-button tab-btn" data-type="Link">Links</button>
