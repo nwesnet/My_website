@@ -525,21 +525,52 @@ window.onload = function () {
                     row.innerHTML = `
                         <div class="horizontal-group">
                             <label class="form-label">Resource:</label>
-                            <input class="form-input" type="text" value="${link.resource}">
-                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                            <input class="form-input" type="text" value="${link.resource}" readonly>
+                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
                         </div>
                         <div class="horizontal-group">
                             <label class="form-label">Link:</label>
-                            <input class="form-input" type="text" value="${link.link}">
-                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                            <input class="form-input" type="text" value="${link.link}" readonly>
+                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
                         </div>
 
                         <hr style="margin-top: 20px;">
                     `;
                     listContent.appendChild(row);
-
-
+                    // Copy button
+                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                        copyBtn.addEventListener("click", () => {
+                            const input = copyBtn.parentElement.querySelector("input");
+                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                        });
+                    });
+                    // Delete link
+                    const deleteBtn = row.querySelector(".delete-btn");
+                    deleteBtn.addEventListener("click", () => {
+                        if(confirm(`Are you sure you want to delete link for resource "${link.resource}"?`)) {
+                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                            fetch(`/account/delete-link/${link.id}`, {
+                                method: "DELETE",
+                                headers: { [csrfHeader]: csrfToken }
+                            })
+                            .then(response => response.text())
+                            .then(data => {
+                                if(data === "OK") {
+                                    row.remove();
+                                    alert("Link deleted.");
+                                } else {
+                                    alert("Failed to delete: " + data);
+                                }
+                            });
+                        }
+                    });
+                    // Edit link
+                    const editBtn = row.querySelector(".edit-btn");
+                    editBtn.addEventListener("click", () => {
+                        showLinkDialog(link);
+                    });
                 });
             })
             .catch(err => {
@@ -566,34 +597,66 @@ window.onload = function () {
                         <div class="horizontal-group">
                             <label class="form-label">Resource:</label>
                             <input class="form-input" type="text" value="${wallet.resource}" readonly>
-                            <button class="icon-button"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
                         </div>
                         <label class="form-label">Key words:</label>
                         <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea>
                         <div class="horizontal-group">
                             <label class="form-label">Address:</label>
                             <input class="form-input" type="text" value="${wallet.address}" readonly>
-                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
                         </div>
                         <div class="horizontal-group">
                             <label class="form-label">Password:</label>
                             <input class="form-input" type="password" value="${wallet.password}" readonly>
                             <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                            <button class="icon-button"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
                         </div>
 
                         <hr style="margin-top: 20px;">
                     `;
                     listContent.appendChild(row);
-
+                    // Toggle password visibility ( password )
                     const toggleBtn = row.querySelector(".toggle-btn");
                     const passwordInput = row.querySelector('input[type="password"]');
                     toggleBtn.addEventListener("click", () => {
                         passwordInput.type = passwordInput.type === "password" ? "text" : "password";
                     });
+                    // Copy button
+                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                        copyBtn.addEventListener("click", () => {
+                            const input = copyBtn.parentElement.querySelector("input");
+                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                        });
+                    });
+                    // Delete button
+                    const deleteBtn = row.querySelector(".delete-btn");
+                    deleteBtn.addEventListener("click", () => {
+                        if(confirm(`Are you sure you want to delete wallet for resource "${wallet.resource}"?`)) {
+                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                            fetch(`/account/delete-wallet/${wallet.id}`, {
+                                method: "DELETE",
+                                headers: { [csrfHeader]: csrfToken }
+                            })
+                            .then(response => response.text())
+                            .then(data => {
+                                if(data === "OK") {
+                                    row.remove();
+                                    alert("Wallet deleted");
+                                } else {
+                                    alert("Failed to delete: " + data);
+                                }
+                            });
+                        }
+                    });
+                    // Edit button
+                    const editBtn = row.querySelector(".edit-btn");
+                    editBtn.addEventListener("click", () => {
+                        showWalletDialog(wallet);
+                    });
                 });
-
             })
             .catch(err => {
                 console.error("Failed to load wallets:", err);
@@ -876,6 +939,141 @@ window.onload = function () {
             });
         });
     }
+    // Link dialog
+    function showLinkDialog(link) {
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.zIndex = "9999";
+
+        const dialog = document.createElement("div");
+        dialog.style.backgroundColor = "#222";
+        dialog.style.padding = "30px";
+        dialog.style.borderRadius = "10px";
+        dialog.style.width = "400px";
+
+        dialog.innerHTML = `
+            <h3>Edit Link</h3>
+            <label class="form-label">Resource:</label>
+            <input id="editResource" class="form-input" type="text" value="${link.resource}"><br>
+            <label class="form-label">Link:</label>
+            <input id="editLink" class="form-input" type="text" value="${link.link}"><br><br>
+            <button id="saveEditBtn" class="form-button">Save</button>
+            <button id="cancelEditBtn" class="form-button">Cancel</button>
+        `;
+
+        overlay.append(dialog);
+        document.body.appendChild(overlay);
+
+        document.getElementById("cancelEditBtn").addEventListener("click", () => {
+            overlay.remove();
+        });
+
+        document.getElementById("saveEditBtn").addEventListener("click", () => {
+            const resource = document.getElementById("editResource").value;
+            const linkURL = document.getElementById("editLink").value;
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch("/account/update-link", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    [csrfHeader]: csrfToken
+                },
+                body: `id=${link.id}&resource=${encodeURIComponent(resource)}&linkURL=${encodeURIComponent(linkURL)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                if(data === "OK") {
+                    alert("Link updated successfully.");
+                    overlay.remove();
+                    loadLinkList();
+                } else {
+                    alert("Error: " + data);
+                }
+            });
+        });
+    }
+    // Wallet dialog
+    function showWalletDialog(wallet) {
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.zIndex = "9999";
+
+        const dialog = document.createElement("div");
+        dialog.style.backgroundColor = "#222";
+        dialog.style.padding = "30px";
+        dialog.style.borderRadius = "10px";
+        dialog.style.width = "400px";
+
+        dialog.innerHTML = `
+            <h3>Edit Wallet</h3>
+            <label class="form-label">Resource:</label>
+            <input id="editResource" class="form-input" type="text" value="${wallet.resource}"><br>
+            <label class="form-label">Key Words:</label>
+            <textarea id="editKeyWords" class="form-textarea">${wallet.keyWords}</textarea><br>
+            <label class="form-label">Address:</label>
+            <input id="editAddress" class="form-input" type="text" value="${wallet.address}"><br>
+            <label class="form-label">Password:</label>
+            <input id="editPassword" class="form-input" type="text" value="${wallet.password}"><br><br>
+            <button id="saveEditBtn" class="form-button">Save</button>
+            <button id="cancelEditBtn" class="form-button">Cancel</button>
+        `;
+
+        overlay.append(dialog);
+        document.body.appendChild(overlay);
+
+        document.getElementById("cancelEditBtn").addEventListener("click", () => {
+            overlay.remove();
+        });
+
+        document.getElementById("saveEditBtn").addEventListener("click", () => {
+            const resource = document.getElementById("editResource").value;
+            const keyWords = document.getElementById("editKeyWords").value;
+            const address = document.getElementById("editAddress").value;
+            const password = document.getElementById("editPassword").value;
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch("/account/update-wallet", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    [csrfHeader]: csrfToken
+                },
+                body: `id=${wallet.id}&resource=${encodeURIComponent(resource)}&keyWords=${encodeURIComponent(keyWords)}&address=${encodeURIComponent(address)}&password=${encodeURIComponent(password)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === "OK") {
+                    alert("Wallet updated successfully.");
+                    overlay.remove();
+                    loadWalletList();
+                } else {
+                    alert("Error: " + data);
+                }
+            });
+        });
+    }
+
+
+
 
 };
 

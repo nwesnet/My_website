@@ -238,6 +238,80 @@ public class PasswordManagerController {
         logService.log(user, "[web] Deleted card for " + card.getResource());
         return "OK";
     }
+    @PostMapping("/update-link")
+    @ResponseBody
+    public String updateLink(
+            @RequestParam Long id,
+            @RequestParam String resource,
+            @RequestParam String linkURL,
+            Principal principal
+    ) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Link link = linkService.find(id).orElseThrow(() -> new RuntimeException("Link not found"));
+        if(!link.getUser().getId().equals(user.getId())) {
+            return "Unauthorized";
+        }
+        link.setResource(resource);
+        link.setLink(linkURL);
+        linkService.saveLink(link);
+
+        logService.log(user, "[web] Edited link for " + resource);
+
+        return "OK";
+    }
+    @DeleteMapping("/delete-link/{id}")
+    @ResponseBody
+    public String deleteLink(@PathVariable Long id, Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Link link = linkService.find(id).orElseThrow(() -> new RuntimeException("Link not found"));
+        if(!link.getUser().getId().equals(user.getId())) {
+            return "Unauthorized";
+        }
+        linkService.deleteLink(id);
+        logService.log(user, "[web] Deleted link for " + link.getResource());
+        return "OK";
+    }
+    @PostMapping("/update-wallet")
+    @ResponseBody
+    public String updateWallet(
+            @RequestParam Long id,
+            @RequestParam String resource,
+            @RequestParam String keyWords,
+            @RequestParam String address,
+            @RequestParam String password,
+            Principal principal
+    ) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Wallet wallet = walletService.find(id).orElseThrow(() -> new RuntimeException("Wallet not found"));
+        if(!wallet.getUser().getId().equals(user.getId())) {
+            return "Unauthorized";
+        }
+        wallet.setResource(resource);
+        wallet.setKeyWords(keyWords);
+        wallet.setAddress(address);
+        wallet.setPassword(password);
+        walletService.saveWallet(wallet);
+
+        logService.log(user, "[web] Edited wallet for " + resource);
+
+        return "OK";
+    }
+    @DeleteMapping("/delete-wallet/{id}")
+    @ResponseBody
+    public String deleteWallet(@PathVariable Long id, Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Wallet wallet = walletService.find(id).orElseThrow(() -> new RuntimeException("Wallet not found"));
+        if(!wallet.getUser().getId().equals(user.getId())) {
+            return "Unauthorized";
+        }
+        walletService.deleteWallet(id);
+        logService.log(user, "[web] Deleted wallet for " + wallet.getResource());
+        return "OK";
+    }
     @GetMapping("/logs")
     @ResponseBody
     public List<String> getLogs(Principal principal) {
