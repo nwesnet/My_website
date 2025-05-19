@@ -777,18 +777,35 @@ window.onload = function () {
             loadLogs();
         }
     });
-
+    let loadedLogs = [];
     // Simulated log loader (in real app this would fetch from a file)
     function loadLogs() {
         fetch("/account/logs")
             .then(response => response.json())
             .then(data => {
-                document.getElementById("logText").value = data.join('\n');
+                loadedLogs = data;
+                displayLogs(loadedLogs);
             })
             .catch(err => {
                 document.getElementById("logText").value = "Failed to load logs.";
             });
     }
+    function displayLogs(logArray) {
+        document.getElementById("logText").value = logArray.join('\n');
+    }
+    // Create the variable that get the value of logs searchbar
+    const logsSearchInput = document.getElementById("logsSearch");
+    // Add listener that check and set the search input
+    logsSearchInput.addEventListener("input", function() {
+        const query = logsSearchInput.value.trim().toLowerCase();
+        if(!query) {
+            displayLogs(loadedLogs);
+            return;
+        }
+        // Filter logs that include the query ( case-insensitive )
+        const filtered = loadedLogs.filter(log => log.toLowerCase().includes(query));
+        displayLogs(filtered);
+    });
 
 
     // Dialog windows
