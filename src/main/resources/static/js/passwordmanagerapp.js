@@ -281,6 +281,9 @@ window.onload = function () {
         }
         return result;
     }
+
+    let currentShowListType = "Account";
+    let showListAllData = [];
     function renderShowListUI() {
         middleContent.innerHTML = `
             <div style="margin-bottom: 16px;">
@@ -294,381 +297,377 @@ window.onload = function () {
             </div>
             <div id="listContent"></div>
         `;
-
-        // Default tab
-        loadAccountList();
-
+        currentShowListType = "Account";
+        fetchAndDisplay(currentShowListType);
+        // Tab click logic
         document.querySelectorAll(".tab-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 const type = btn.getAttribute("data-type");
-                if (type === "Account") {
-                    loadAccountList();
-                } else if (type == "Card") {
-                    loadCardList();
-                } else if (type == "Link") {
-                    loadLinkList();
-                } else if (type == "Wallet") {
-                    loadWalletList();
+                currentShowListType = type;
+                fetchAndDisplay(type);
+            });
+        });
+        // Search bar logic
+        const searchInput = document.getElementById("showListSearch");
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.trim().toLowerCase();
+            displayFilteredList(query);
+        });
+    }
+    // Fetch and display, plus store the data for search
+    function fetchAndDisplay(type) {
+        let url = "";
+        if (type === "Account") url = "/account/list-accounts";
+        else if (type === "Card") url = "/account/list-cards";
+        else if (type === "Link") url = "/account/list-links";
+        else if (type === "Wallet") url = "/account/list-wallets";
+        if (!url) return;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                showListAllData = data;  // use global variable
+                const searchInput = document.getElementById("showListSearch");
+                const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+                displayFilteredList(query);
+            })
+            .catch(err => {
+                document.getElementById("listContent").innerHTML = `<p>Error loading ${type.toLowerCase()}s.</p>`;
+            });
+    }
+    // Display filtered list based on query
+    function displayFilteredList(query) {
+        let filtered = showListAllData;
+            if (query) {
+                filtered = showListAllData.filter(item => {
+                    if (item.resource && item.resource.toLowerCase().includes(query)) return true;
+                    if (currentShowListType === "Link" && item.link && item.link.toLowerCase().includes(query)) return true;
+                    if (currentShowListType === "Wallet" && item.address && item.address.toLowerCase().includes(query)) return true;
+                    return false;
+                });
+            }
+            if (currentShowListType === "Account") renderAccountList(filtered);
+            else if (currentShowListType === "Card") renderCardList(filtered);
+            else if (currentShowListType === "Link") renderLinkList(filtered);
+            else if (currentShowListType === "Wallet") renderWalletList(filtered);
+    }
+    // These functions take a filtered array and display it
+    function renderAccountList(data) {
+        const listContent = document.getElementById("listContent");
+        if (data.length === 0) {
+            listContent.innerHTML = `<p>No accounts found.</p>`;
+            return;
+        }
+        listContent.innerHTML = "";
+        data.forEach(account => {
+            const row = document.createElement("div");
+            row.style.marginBottom = "20px";
+            row.innerHTML = `
+                <div class="horizontal-group">
+                    <label class="form-label">Resource:</label>
+                    <input class="form-input" type="text" value="${account.resource}" readonly>
+                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Login:</label>
+                    <input class="form-input" type="text" value="${account.username}" readonly>
+                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Password:</label>
+                    <input class="form-input" type="password" value="${account.password}" readonly>
+                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                </div>
+
+                <hr style="margin-top: 20px;">
+            `;
+
+            listContent.appendChild(row);
+
+            // Add toggle password visibility
+            const toggleBtn = row.querySelector(".toggle-btn");
+            const passwordInput = row.querySelector('input[type="password"]');
+            toggleBtn.addEventListener("click", () => {
+                passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+            });
+            // Add handle copy buttons
+            row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                copyBtn.addEventListener("click", () => {
+                    const input = copyBtn.parentElement.querySelector("input");
+                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                });
+            });
+            // Add delete button
+            const deleteBtn = row.querySelector(".delete-btn");
+            deleteBtn.addEventListener("click", () => {
+                if(confirm(`Are you sure you want to delete account on resource "${account.resource}"?`)) {
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                    fetch(`/account/delete-account/${account.id}`, {
+                        method: "DELETE",
+                        headers: {
+                            [csrfHeader]: csrfToken
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        if(data === "OK") {
+                            row.remove();
+                            alert("Account deleted.");
+                        } else {
+                            alert("Failed to delete: " + data);
+                        }
+                    });
                 }
-                else document.getElementById("listContent").innerHTML = `<p>Coming soon: ${type}</p>`;
+            });
+            // Add edit button
+            const editBtn = row.querySelector(".edit-btn");
+            editBtn.addEventListener("click", () => {
+                showAccountDialog(account);
             });
         });
     }
-    function loadAccountList() {
-        fetch("/account/list-accounts")
-            .then(response => response.json())
-            .then(data => {
-                const listContent = document.getElementById("listContent");
-                listContent.innerHTML = '';
+    function renderCardList(data) {
+        const listContent = document.getElementById("listContent");
+        if (data.length === 0) {
+            listContent.innerHTML = "<p>No cards found.</p>";
+            return;
+        }
 
-                if (data.length === 0) {
-                    listContent.innerHTML = "<p>No accounts saved.</p>";
-                    return;
-                }
+        listContent.innerHTML = "";
+        data.forEach(card => {
+            const row = document.createElement("div");
+            row.style.marginBottom = "20px";
+            row.innerHTML = `
+                <div class="horizontal-group">
+                    <label class="form-label">Resource:</label>
+                    <input class="form-input" type="text" value="${card.resource}" readonly>
+                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Number:</label>
+                    <input class="form-input" type="text" value="${card.cardNumber}" readonly>
+                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Date:</label>
+                    <input class="form-input" type="text" value="${card.expiryDate}" readonly>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Owner:</label>
+                    <input class="form-input" type="text" value="${card.ownerName}" readonly>
+                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">CVV:</label>
+                    <input class="form-input" type="password" value="${card.cvv}" readonly>
+                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Pincode:</label>
+                    <input class="form-input" type="password" value="${card.cardPin}" readonly>
+                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Network:</label>
+                    <input class="form-input" type="text" value="${card.cardNetwork}" readonly>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Type:</label>
+                    <input class="form-input" type="text" value="${card.cardType}" readonly>
+                </div>
 
-                data.forEach(account => {
-                    const row = document.createElement("div");
-                    row.style.marginBottom = "20px";
-                    row.innerHTML = `
-                        <div class="horizontal-group">
-                            <label class="form-label">Resource:</label>
-                            <input class="form-input" type="text" value="${account.resource}" readonly>
-                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Login:</label>
-                            <input class="form-input" type="text" value="${account.username}" readonly>
-                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Password:</label>
-                            <input class="form-input" type="password" value="${account.password}" readonly>
-                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
-                        </div>
-
-                        <hr style="margin-top: 20px;">
-                    `;
-
-                    listContent.appendChild(row);
-
-                    // Add toggle password visibility
-                    const toggleBtn = row.querySelector(".toggle-btn");
-                    const passwordInput = row.querySelector('input[type="password"]');
-                    toggleBtn.addEventListener("click", () => {
-                        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-                    });
-                    // Add handle copy buttons
-                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
-                        copyBtn.addEventListener("click", () => {
-                            const input = copyBtn.parentElement.querySelector("input");
-                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
-                        });
-                    });
-                    // Add delete button
-                    const deleteBtn = row.querySelector(".delete-btn");
-                    deleteBtn.addEventListener("click", () => {
-                        if(confirm(`Are you sure you want to delete account on resource "${account.resource}"?`)) {
-                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
-                            fetch(`/account/delete-account/${account.id}`, {
-                                method: "DELETE",
-                                headers: {
-                                    [csrfHeader]: csrfToken
-                                }
-                            })
-                            .then(response => response.text())
-                            .then(data => {
-                                if(data === "OK") {
-                                    row.remove();
-                                    alert("Account deleted.");
-                                } else {
-                                    alert("Failed to delete: " + data);
-                                }
-                            });
+                <hr style="margin-top: 20px;">
+            `;
+            listContent.appendChild(row);
+            // Copy buttons
+            row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                copyBtn.addEventListener("click", () => {
+                    const input = copyBtn.parentElement.querySelector("input");
+                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                });
+            });
+            // Toggle password visibility ( CVV & PIN )
+            const toggleBtns = row.querySelectorAll(".toggle-btn");
+            const passwordInputs = row.querySelectorAll('input[type="password"]');
+            toggleBtns.forEach((toggleBtn, idx) => {
+                toggleBtn.addEventListener("click", () => {
+                    const input = passwordInputs[idx];
+                    input.type = input.type === "password" ? "text" : "password";
+                });
+            });
+            // Delete card
+            const deleteBtn = row.querySelector(".delete-btn");
+            deleteBtn.addEventListener("click", () => {
+                if(confirm(`Are you sure you want to delete card for resource "${card.resource}"?`)) {
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                    fetch(`/account/delete-card/${card.id}`, {
+                        method: "DELETE",
+                        headers: { [csrfHeader]: csrfToken }
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        if(data === "OK") {
+                            row.remove();
+                            alert("Card deleted.");
+                        } else {
+                            alert("Failed to delete: " + data);
                         }
                     });
-                    // Add edit button
-                    const editBtn = row.querySelector(".edit-btn");
-                    editBtn.addEventListener("click", () => {
-                        showAccountDialog(account);
-                    });
-                });
-            })
-            .catch(err => {
-                console.error("Failed to load accounts:", err);
-                document.getElementById("listContent").innerHTML = "<p>Error loading accounts.</p>";
-            });
-    }
-    function loadCardList() {
-        fetch("/account/list-cards")
-            .then(response => response.json())
-            .then(data => {
-                const listContent = document.getElementById("listContent");
-                listContent.innerHTML = '';
-
-                if (data.length === 0) {
-                    listContent.innerHTML = "<p>No cards saved.</p>";
-                    return;
                 }
+            });
+            // Edit card
+            const editBtn = row.querySelector(".edit-btn");
+            editBtn.addEventListener("click", () => {
+                showCardDialog(card);
+            });
+        });
+    }
+    function renderLinkList(data) {
+        const listContent = document.getElementById("listContent");
+        if (data.length === 0) {
+            listContent.innerHTML = `<p>No links found.</p>`;
+            return;
+        }
+        listContent.innerHTML = "";
+        data.forEach(link => {
+            const row = document.createElement("div");
+            row.style.marginBottom = "20px";
+            row.innerHTML = `
+                <div class="horizontal-group">
+                    <label class="form-label">Resource:</label>
+                    <input class="form-input" type="text" value="${link.resource}" readonly>
+                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Link:</label>
+                    <input class="form-input" type="text" value="${link.link}" readonly>
+                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                </div>
 
-                data.forEach(card => {
-                    const row = document.createElement("div");
-                    row.style.marginBottom = "20px";
-                    row.innerHTML = `
-                        <div class="horizontal-group">
-                            <label class="form-label">Resource:</label>
-                            <input class="form-input" type="text" value="${card.resource}" readonly>
-                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Number:</label>
-                            <input class="form-input" type="text" value="${card.cardNumber}" readonly>
-                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Date:</label>
-                            <input class="form-input" type="text" value="${card.expiryDate}" readonly>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Owner:</label>
-                            <input class="form-input" type="text" value="${card.ownerName}" readonly>
-                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">CVV:</label>
-                            <input class="form-input" type="password" value="${card.cvv}" readonly>
-                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Pincode:</label>
-                            <input class="form-input" type="password" value="${card.cardPin}" readonly>
-                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Network:</label>
-                            <input class="form-input" type="text" value="${card.cardNetwork}" readonly>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Type:</label>
-                            <input class="form-input" type="text" value="${card.cardType}" readonly>
-                        </div>
-
-                        <hr style="margin-top: 20px;">
-                    `;
-
-                    listContent.appendChild(row);
-                    // Copy buttons
-                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
-                        copyBtn.addEventListener("click", () => {
-                            const input = copyBtn.parentElement.querySelector("input");
-                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
-                        });
-                    });
-                    // Toggle password visibility ( CVV & PIN )
-                    const toggleBtns = row.querySelectorAll(".toggle-btn");
-                    const passwordInputs = row.querySelectorAll('input[type="password"]');
-                    toggleBtns.forEach((toggleBtn, idx) => {
-                        toggleBtn.addEventListener("click", () => {
-                            const input = passwordInputs[idx];
-                            input.type = input.type === "password" ? "text" : "password";
-                        });
-                    });
-                    // Delete card
-                    const deleteBtn = row.querySelector(".delete-btn");
-                    deleteBtn.addEventListener("click", () => {
-                        if(confirm(`Are you sure you want to delete card for resource "${card.resource}"?`)) {
-                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                            fetch(`/account/delete-card/${card.id}`, {
-                                method: "DELETE",
-                                headers: { [csrfHeader]: csrfToken }
-                            })
-                            .then(response => response.text())
-                            .then(data => {
-                                if(data === "OK") {
-                                    row.remove();
-                                    alert("Card deleted.");
-                                } else {
-                                    alert("Failed to delete: " + data);
-                                }
-                            });
+                <hr style="margin-top: 20px;">
+            `;
+            listContent.appendChild(row);
+            // Copy button
+            row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                copyBtn.addEventListener("click", () => {
+                    const input = copyBtn.parentElement.querySelector("input");
+                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                });
+            });
+            // Delete link
+            const deleteBtn = row.querySelector(".delete-btn");
+            deleteBtn.addEventListener("click", () => {
+                if(confirm(`Are you sure you want to delete link for resource "${link.resource}"?`)) {
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                    fetch(`/account/delete-link/${link.id}`, {
+                        method: "DELETE",
+                        headers: { [csrfHeader]: csrfToken }
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        if(data === "OK") {
+                            row.remove();
+                            alert("Link deleted.");
+                        } else {
+                            alert("Failed to delete: " + data);
                         }
                     });
-                    // Edit card
-                    const editBtn = row.querySelector(".edit-btn");
-                    editBtn.addEventListener("click", () => {
-                        showCardDialog(card);
-                    });
-                });
-            })
-            .catch(err => {
-                console.error("Failed to load cards:", err);
-                document.getElementById("listContent").innerHTML = "<p>Error loading cards.</p>";
-            });
-    }
-    function loadLinkList() {
-        fetch("/account/list-links")
-            .then(response => response.json())
-            .then(data => {
-                const listContent = document.getElementById("listContent");
-                listContent.innerHTML = '';
-
-                if(data.length == 0) {
-                    listContent.innerHTML = "<p>No links saved.</p>";
-                    return;
                 }
+            });
+            // Edit link
+            const editBtn = row.querySelector(".edit-btn");
+            editBtn.addEventListener("click", () => {
+                showLinkDialog(link);
+            });
+        });
+    }
+    function renderWalletList(data) {
+        const listContent = document.getElementById("listContent");
+        if (data.length === 0) {
+            listContent.innerHTML = `<p>No wallets found.</p>`;
+            return;
+        }
+        listContent.innerHTML = "";
+        data.forEach(wallet => {
+            const row = document.createElement("div");
+            row.style.marginBottom = "20px";
+            row.innerHTML = `
+                <div class="horizontal-group">
+                    <label class="form-label">Resource:</label>
+                    <input class="form-input" type="text" value="${wallet.resource}" readonly>
+                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
+                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                </div>
+                    <label class="form-label">Key words:</label>
+                    <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea>
+                <div class="horizontal-group">
+                    <label class="form-label">Address:</label>
+                    <input class="form-input" type="text" value="${wallet.address}" readonly>
+                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                </div>
+                <div class="horizontal-group">
+                    <label class="form-label">Password:</label>
+                    <input class="form-input" type="password" value="${wallet.password}" readonly>
+                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                </div>
 
-                data.forEach(link => {
-                    const row = document.createElement("div");
-                    row.style.marginBottom = "20px";
-                    row.innerHTML = `
-                        <div class="horizontal-group">
-                            <label class="form-label">Resource:</label>
-                            <input class="form-input" type="text" value="${link.resource}" readonly>
-                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Link:</label>
-                            <input class="form-input" type="text" value="${link.link}" readonly>
-                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
-                        </div>
-
-                        <hr style="margin-top: 20px;">
-                    `;
-                    listContent.appendChild(row);
-                    // Copy button
-                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
-                        copyBtn.addEventListener("click", () => {
-                            const input = copyBtn.parentElement.querySelector("input");
-                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
-                        });
-                    });
-                    // Delete link
-                    const deleteBtn = row.querySelector(".delete-btn");
-                    deleteBtn.addEventListener("click", () => {
-                        if(confirm(`Are you sure you want to delete link for resource "${link.resource}"?`)) {
-                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                            fetch(`/account/delete-link/${link.id}`, {
-                                method: "DELETE",
-                                headers: { [csrfHeader]: csrfToken }
-                            })
-                            .then(response => response.text())
-                            .then(data => {
-                                if(data === "OK") {
-                                    row.remove();
-                                    alert("Link deleted.");
-                                } else {
-                                    alert("Failed to delete: " + data);
-                                }
-                            });
+                <hr style="margin-top: 20px;">
+            `;
+            listContent.appendChild(row);
+            // Toggle password visibility ( password )
+            const toggleBtn = row.querySelector(".toggle-btn");
+            const passwordInput = row.querySelector('input[type="password"]');
+            toggleBtn.addEventListener("click", () => {
+                passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+            });
+            // Copy button
+            row.querySelectorAll(".copy-btn").forEach(copyBtn => {
+                copyBtn.addEventListener("click", () => {
+                    const input = copyBtn.parentElement.querySelector("input");
+                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                });
+            });
+            // Delete button
+            const deleteBtn = row.querySelector(".delete-btn");
+            deleteBtn.addEventListener("click", () => {
+                if(confirm(`Are you sure you want to delete wallet for resource "${wallet.resource}"?`)) {
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                    fetch(`/account/delete-wallet/${wallet.id}`, {
+                        method: "DELETE",
+                        headers: { [csrfHeader]: csrfToken }
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        if(data === "OK") {
+                            row.remove();
+                            alert("Wallet deleted");
+                        } else {
+                            alert("Failed to delete: " + data);
                         }
                     });
-                    // Edit link
-                    const editBtn = row.querySelector(".edit-btn");
-                    editBtn.addEventListener("click", () => {
-                        showLinkDialog(link);
-                    });
-                });
-            })
-            .catch(err => {
-                console.error("Failed to load links:", err);
-                document.getElementById("listContent").innerHTML = "<p>Error loading links.</p>";
-            });
-    }
-    function loadWalletList() {
-        fetch("/account/list-wallets")
-            .then(response => response.json())
-            .then(data => {
-                const listContent = document.getElementById("listContent");
-                listContent.innerHTML = '';
-
-                if(data.length === 0) {
-                    listContent.innerHTML = "<p>No wallets saved.</p>";
-                    return;
                 }
-
-                data.forEach(wallet => {
-                    const row = document.createElement("div");
-                    row.style.marginBottom = "20px";
-                    row.innerHTML = `
-                        <div class="horizontal-group">
-                            <label class="form-label">Resource:</label>
-                            <input class="form-input" type="text" value="${wallet.resource}" readonly>
-                            <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                            <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
-                        </div>
-                        <label class="form-label">Key words:</label>
-                        <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea>
-                        <div class="horizontal-group">
-                            <label class="form-label">Address:</label>
-                            <input class="form-input" type="text" value="${wallet.address}" readonly>
-                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
-                        </div>
-                        <div class="horizontal-group">
-                            <label class="form-label">Password:</label>
-                            <input class="form-input" type="password" value="${wallet.password}" readonly>
-                            <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                            <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
-                        </div>
-
-                        <hr style="margin-top: 20px;">
-                    `;
-                    listContent.appendChild(row);
-                    // Toggle password visibility ( password )
-                    const toggleBtn = row.querySelector(".toggle-btn");
-                    const passwordInput = row.querySelector('input[type="password"]');
-                    toggleBtn.addEventListener("click", () => {
-                        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-                    });
-                    // Copy button
-                    row.querySelectorAll(".copy-btn").forEach(copyBtn => {
-                        copyBtn.addEventListener("click", () => {
-                            const input = copyBtn.parentElement.querySelector("input");
-                            navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
-                        });
-                    });
-                    // Delete button
-                    const deleteBtn = row.querySelector(".delete-btn");
-                    deleteBtn.addEventListener("click", () => {
-                        if(confirm(`Are you sure you want to delete wallet for resource "${wallet.resource}"?`)) {
-                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                            fetch(`/account/delete-wallet/${wallet.id}`, {
-                                method: "DELETE",
-                                headers: { [csrfHeader]: csrfToken }
-                            })
-                            .then(response => response.text())
-                            .then(data => {
-                                if(data === "OK") {
-                                    row.remove();
-                                    alert("Wallet deleted");
-                                } else {
-                                    alert("Failed to delete: " + data);
-                                }
-                            });
-                        }
-                    });
-                    // Edit button
-                    const editBtn = row.querySelector(".edit-btn");
-                    editBtn.addEventListener("click", () => {
-                        showWalletDialog(wallet);
-                    });
-                });
-            })
-            .catch(err => {
-                console.error("Failed to load wallets:", err);
-                document.getElementById("listContent").innerHTML = "<p>Error loading wallets.</p>";
             });
+            // Edit button
+            const editBtn = row.querySelector(".edit-btn");
+            editBtn.addEventListener("click", () => {
+                showWalletDialog(wallet);
+            });
+        });
     }
-
-
-
+    function refreshShowList() {
+        fetchAndDisplay(currentShowListType);
+    }
+    // Preferences GUI
     function renderPreferencesUI() {
         middleContent.innerHTML = `
             <h2>Preferences</h2>
@@ -872,7 +871,7 @@ window.onload = function () {
                 if(data === "OK") {
                     alert("Account updated successfully.");
                     overlay.remove();
-                    loadAccountList();
+                    refreshShowList();
                 } else {
                     alert("Error: " + data);
                 }
@@ -952,7 +951,7 @@ window.onload = function () {
                 if(data === "OK") {
                     alert("Card updated successfully.");
                     overlay.remove();
-                    loadCardList();
+                    refreshShowList();
                 } else {
                     alert("Error: " + data);
                 }
@@ -1015,7 +1014,7 @@ window.onload = function () {
                 if(data === "OK") {
                     alert("Link updated successfully.");
                     overlay.remove();
-                    loadLinkList();
+                    refreshShowList();
                 } else {
                     alert("Error: " + data);
                 }
@@ -1084,17 +1083,13 @@ window.onload = function () {
                 if (data === "OK") {
                     alert("Wallet updated successfully.");
                     overlay.remove();
-                    loadWalletList();
+                    refreshShowList();
                 } else {
                     alert("Error: " + data);
                 }
             });
         });
     }
-
-
-
-
 };
 
 

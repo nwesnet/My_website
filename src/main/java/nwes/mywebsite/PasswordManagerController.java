@@ -16,14 +16,22 @@ public class PasswordManagerController {
     private final WalletService walletService;
     private final LogService logService;
     private final UserRepository userRepository;
+    private final UserSettingsService userSettingsService;
 
-    public PasswordManagerController(AccountService accountService,CardService cardService, LinkService linkService, WalletService walletService, LogService logService, UserRepository userRepository) {
+    public PasswordManagerController(AccountService accountService,
+                                     CardService cardService,
+                                     LinkService linkService,
+                                     WalletService walletService,
+                                     LogService logService,
+                                     UserRepository userRepository,
+                                     UserSettingsService userSettingsService) {
         this.accountService = accountService;
         this.cardService = cardService;
         this.linkService = linkService;
         this.walletService = walletService;
         this.logService = logService;
         this.userRepository = userRepository;
+        this.userSettingsService = userSettingsService;
     }
 
     @PostMapping("/add-account")
@@ -46,7 +54,10 @@ public class PasswordManagerController {
 
         accountService.saveAccount(account);
 
-        logService.log(user, "[web] Added Account for " + resource);
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Added Account for " + resource);
+        }
 
         return "OK";
     }
@@ -80,6 +91,11 @@ public class PasswordManagerController {
 
         cardService.saveCard(card);
 
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Added Card for " + resource);
+        }
+
         return "OK";
     }
     @PostMapping("/add-link")
@@ -99,6 +115,11 @@ public class PasswordManagerController {
         link.setUser(user);
 
         linkService.saveLink(link);
+
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Added Link for " + resource);
+        }
 
         return "OK";
     }
@@ -122,6 +143,11 @@ public class PasswordManagerController {
         wallet.setUser(user);
 
         walletService.saveWallet(wallet);
+
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Added Wallet for " + resource);
+        }
 
         return "OK";
     }
@@ -171,9 +197,13 @@ public class PasswordManagerController {
         account.setResource(resource);
         account.setUsername(username);
         account.setPassword(password);
+
         accountService.saveAccount(account);
 
-        logService.log(user, "[web] Edited Account for " + resource);
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Edited Account for " + resource);
+        }
 
         return "OK";
     }
@@ -187,7 +217,12 @@ public class PasswordManagerController {
             return "Unauthorized";
         }
         accountService.deleteAccount(id);
-        logService.log(user, "[web] Deleted Account for " + account.getResource());
+
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Deleted Account for " + account.getResource());
+        }
+
         return "OK";
     }
     @PostMapping("/update-card")
@@ -221,7 +256,10 @@ public class PasswordManagerController {
 
         cardService.saveCard(card);
 
-        logService.log(user, "[web] Edited card for " + resource);
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Edited Card for " + resource);
+        }
 
         return "OK";
     }
@@ -235,7 +273,12 @@ public class PasswordManagerController {
             return "Unauthorized";
         }
         cardService.deleteCard(id);
-        logService.log(user, "[web] Deleted card for " + card.getResource());
+
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Deleted Card for " + card.getResource());
+        }
+
         return "OK";
     }
     @PostMapping("/update-link")
@@ -256,7 +299,10 @@ public class PasswordManagerController {
         link.setLink(linkURL);
         linkService.saveLink(link);
 
-        logService.log(user, "[web] Edited link for " + resource);
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Edited Link for " + resource);
+        }
 
         return "OK";
     }
@@ -270,7 +316,12 @@ public class PasswordManagerController {
             return "Unauthorized";
         }
         linkService.deleteLink(id);
-        logService.log(user, "[web] Deleted link for " + link.getResource());
+
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Deleted Link for " + link.getResource());
+        }
+
         return "OK";
     }
     @PostMapping("/update-wallet")
@@ -295,7 +346,10 @@ public class PasswordManagerController {
         wallet.setPassword(password);
         walletService.saveWallet(wallet);
 
-        logService.log(user, "[web] Edited wallet for " + resource);
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Edited Wallet for " + resource);
+        }
 
         return "OK";
     }
@@ -309,7 +363,12 @@ public class PasswordManagerController {
             return "Unauthorized";
         }
         walletService.deleteWallet(id);
-        logService.log(user, "[web] Deleted wallet for " + wallet.getResource());
+
+        UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+        if (userSettings.isStoreLogs()) {
+            logService.log(user, "[web] Deleted Wallet for " + wallet.getResource());
+        }
+
         return "OK";
     }
     @GetMapping("/logs")

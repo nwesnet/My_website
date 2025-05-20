@@ -14,10 +14,14 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
     private final LogService logService;
+    private final UserSettingsService userSettingsService;
 
-    public CustomLoginSuccessHandler(UserRepository userRepository, LogService logService) {
+    public CustomLoginSuccessHandler(UserRepository userRepository,
+                                     LogService logService,
+                                     UserSettingsService userSettingsService) {
         this.userRepository = userRepository;
         this.logService = logService;
+        this.userSettingsService = userSettingsService;
     }
 
     @Override
@@ -26,7 +30,10 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElse(null);
         if (user != null) {
-            logService.log(user, "[web] Login");
+            UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
+            if (userSettings.isStoreLogs()) {
+                logService.log(user, "[web] Login");
+            }
         }
         response.sendRedirect("/"); // Redirect to home after login
     }
