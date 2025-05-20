@@ -697,10 +697,49 @@ window.onload = function () {
                     `;
                 } else if (tabType === "security") {
                     prefsContent.innerHTML = `
-                        <button class="form-button">Double confirmation</button>
-                        <button class="form-button">Store logs</button>
+                        <button class="form-button" id="doubleConfirmBtn">Double confirmation</button>
+                        <button class="form-button" id="storeLogsBtn">Store logs</button>
                         <button class="form-button" id="clearLogsBtn">Clear logs</button>
                     `;
+                    // Double confirmation checkbox logic
+                    document.getElementById("doubleConfirmBtn").addEventListener("click", function() {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                        fetch("/settings/toggle-double-confirmation", {
+                            method: "POST",
+                            headers: {
+                                [csrfHeader]: csrfToken
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            if(data === "OK") {
+                                alert("Double confirmation setting toggled");
+                            } else {
+                                alert("Error toggling double confirmation");
+                            }
+                        });
+                    });
+                    // Store logs checkbox logic
+                    document.getElementById("storeLogsBtn").addEventListener("click", function() {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                        fetch("/settings/toggle-store-logs", {
+                            method: "POST",
+                            headers: {
+                                [csrfHeader]: csrfToken
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            if (data === "OK") {
+                                alert("Store logs setting toggled");
+                            } else {
+                                alert("Error toggling store logs");
+                            }
+                        });
+                    });
+                    // Clear logs button logic
                     document.getElementById("clearLogsBtn").addEventListener("click", function(){
                         if(confirm("Are you sure you want to clear all logs?")) {
                             const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
