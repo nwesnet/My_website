@@ -4,7 +4,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/account")
@@ -370,6 +372,46 @@ public class PasswordManagerController {
         }
 
         return "OK";
+    }
+    @GetMapping("/me")
+    @ResponseBody
+    public Map<String, String> getCurrentUser(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Map<String, String> userMap = new HashMap<>();
+        userMap.put("email", user.getEmail());
+        userMap.put("username", user.getUsername());
+        userMap.put("password", user.getPassword());
+        userMap.put("additionalPassword", user.getAdditionalPassword());
+        return userMap;
+    }
+    @PostMapping("/update-account-info")
+    @ResponseBody
+    public String updateAccountInfo(
+            @RequestBody Map<String, String> map,
+            Principal principal
+    ) {
+        String newEmail = map.get("email");
+        String newUsername = map.get("username");
+        String newPassword = map.get("password");
+        String newAdditionalPassword = map.get("additionalPassword");
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!user.getEmail().equals(newEmail) && userRepository.findByEmail(newEmail).isPresent()) {
+            return "Email already taken";
+        }
+        if (!user.getUsername().equals(newUsername) && userRepository.findByUsername(newUsername).isPresent()) {
+            return "Username already taken";
+        }
+        boolean usernameChanged = !user.getUsername().equals(newUsername);
+        user.setEmail(newEmail);
+        user.setUsername(newUsername);
+        user.setPassword(newPassword);
+        user.setAdditionalPassword(newAdditionalPassword);
+        userRepository.save(user);
+
+        return usernameChanged ? "USERNAME_CHANGED" : "OK";
     }
     @GetMapping("/logs")
     @ResponseBody

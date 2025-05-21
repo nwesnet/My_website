@@ -15,10 +15,14 @@ public class UserService {
     }
 
     public void register(User user) {
+        if (repo.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already taken");
+        }
         if (repo.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already taken");
         }
-        user.setPassword(encoder.encode(user.getPassword()));
+        user.setPassword(user.getPassword());
+        user.setAdditionalPassword(user.getAdditionalPassword());
         repo.save(user);
     }
 }

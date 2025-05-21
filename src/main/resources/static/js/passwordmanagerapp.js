@@ -690,11 +690,123 @@ window.onload = function () {
             tab.addEventListener("click", () => {
                 const tabType = tab.getAttribute("data-tab");
                 if (tabType === "account") {
-                    prefsContent.innerHTML = `
-                        <label class="form-label">Username:</label><input class="form-input" type="text"><br>
-                        <label class="form-label">Password:</label><input class="form-input" type="password"><br>
-                        <label class="form-label">Additional Password:</label><input class="form-input" type="password"><br>
-                    `;
+                    // Fetch user info from backend
+                    fetch("/account/me")
+                        .then(res => res.json())
+                        .then(user => {
+                            renderAccountInfo(user);
+                        });
+                        function renderAccountInfo(user) {
+                            prefsContent.innerHTML = `
+                                <div class="horizontal-group">
+                                    <label class="form-label">Email:</label>
+                                    <input class="form-input" id="userEmail" type="email" value="${user.email}" readonly>
+                                    <button class="form-button" id="editAccountBtn">Edit:</button>
+                                </div>
+                                <div class="horizontal-group">
+                                    <label class="form-label">Username:</label>
+                                    <input class="form-input" id="userUsername" type="text" value="${user.username}" readonly>
+                                </div>
+                                <div class="horizontal-group">
+                                    <label class="form-label">Password:</label>
+                                    <input class="form-input" id="userPassword" type="password" value="${user.password}" readonly>
+                                    <button class="form-button" id="showPasswordBtn">Show</button>
+                                </div>
+                                <div class="horizontal-group">
+                                    <label class="form-label">Additional password:</label>
+                                    <input class="form-input" id="userAdditionalPassword" type="password" value="${user.additionalPassword}" readonly>
+                                    <button class="form-button" id="showAdditionalPassword">Show</button>
+                                </div>
+                            `;
+                            // show/hide password
+                            document.getElementById("showPasswordBtn").addEventListener("click", function () {
+                                const pwInput = document.getElementById("userPassword");
+                                pwInput.type = pwInput.type === "password" ? "text" : "password";
+                                this.textContent = pwInput.type === "password" ? "Show" : "Hide";
+                            });
+                            document.getElementById("showAdditionalPassword").addEventListener("click", function () {
+                                const pwInput = document.getElementById("userAdditionalPassword");
+                                pwInput.type = pwInput.type === "password" ? "text" : "password";
+                                this.textContent = pwInput.type === "password" ? "Show" : "Hide";
+                            });
+                            // Edit button logic
+                            document.getElementById("editAccountBtn").addEventListener("click", function () {
+                                // Enable fields
+                                document.getElementById("userEmail").readOnly = false;
+                                document.getElementById("userUsername").readOnly = false;
+                                document.getElementById("userPassword").readOnly = false;
+                                document.getElementById("userAdditionalPassword").readOnly = false;
+                                // Replace edit button
+                                this.style.display = "none";
+                                // Add save and cansel buttons in the same row
+                                const emailGroup = this.parentElement;
+                                const saveBtn = document.createElement("button");
+                                saveBtn.className = "form-button";
+                                saveBtn.textContent = "Save";
+                                emailGroup.appendChild(saveBtn);
+
+                                const cancelBtn = document.createElement("button");
+                                cancelBtn.className = "form-button";
+                                cancelBtn.textContent = "Cancel";
+                                emailGroup.appendChild(cancelBtn);
+                                // Handle cancel
+                                cancelBtn.addEventListener("click", function () {
+                                    fetch("/account/me")
+                                        .then(res => res.json())
+                                        .then(u => renderAccountInfo(u));
+                                });
+                                // Handle save
+                                saveBtn.addEventListener("click", function () {
+                                    const newEmail = document.getElementById("userEmail").value.trim();
+                                    const newUsername = document.getElementById("userUsername").value.trim();
+                                    const newPassword = document.getElementById("userPassword").value.trim();
+                                    const newAdditionalPassword = document.getElementById("userAdditionalPassword").value.trim();
+                                    // Validation
+                                    if (!newEmail || !newUsername) {
+                                        alert("Email and username cannot be empty");
+                                        return;
+                                    }
+                                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                                    fetch("/account/update-account-info", {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-type": "application/json",
+                                            [csrfHeader]: csrfToken
+                                        },
+                                        body: JSON.stringify({
+                                            email: newEmail,
+                                            username: newUsername,
+                                            password: newPassword,
+                                            additionalPassword: newAdditionalPassword
+                                        })
+                                    })
+                                    .then(res => res.text())
+                                    .then(result => {
+                                        if (result === "OK") {
+                                            alert("Account info updated!");
+                                            fetch("/account/me")
+                                                .then(res => res.json())
+                                                .then(u => renderAccountInfo(u));
+                                        } else if (result === "USERNAME_CHANGED") {
+                                            alert("Username changed. Please log in again.");
+                                            fetch("/logout", {
+                                                method: "POST",
+                                                headers: {
+                                                    [csrfHeader]: csrfToken
+                                                }
+                                            }).then(() => {
+                                                window.location.href = "/login";
+                                            });
+                                        } else {
+                                            alert(result);
+                                        }
+                                    });
+
+                                });
+
+                            });
+                        }
                 } else if (tabType === "security") {
                     prefsContent.innerHTML = `
                         <button class="form-button" id="doubleConfirmBtn">Double confirmation</button>
