@@ -281,7 +281,51 @@ window.onload = function () {
         }
         return result;
     }
-
+    // Temporarily bypass logic
+    let doubleConfirmBypassUtil = 0;
+    function isDoubleConfirmationTemporarilyBypassed() {
+        return Date.now() < doubleConfirmBypassUtil;
+    }
+    function enableTemporaryBypass(minutes = 1) {
+        doubleConfirmBypassUtil = Date.now() + minutes * 60 * 1000;
+    }
+    let isDoubleConfirmationEnabled = false;
+    function fetchDoubleConfirmationSettings() {
+        fetch("/settings/get-double-confirmation")
+            .then(res => res.json())
+            .then(obj => { isDoubleConfirmationEnabled = !!obj.enabled; });
+    }
+    fetchDoubleConfirmationSettings();
+    // Check double confirmation
+    function withDoubleConfirmation(action) {
+        if (!isDoubleConfirmationEnabled || isDoubleConfirmationTemporarilyBypassed()) {
+            action();
+        } else {
+            showAdditionalPasswordDialog((enteredPwd, closeDialog) => {
+                const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                fetch("/account/verify-additional-password", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify({ additionalPassword: enteredPwd })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        enableTemporaryBypass(1);
+                        closeDialog();
+                        action();
+                    } else {
+                        alert("Incorrect additional password");
+                    }
+                });
+            });
+        }
+    }
+    // ShowList logic
     let currentShowListType = "Account";
     let showListAllData = [];
     function renderShowListUI() {
@@ -390,43 +434,51 @@ window.onload = function () {
             const toggleBtn = row.querySelector(".toggle-btn");
             const passwordInput = row.querySelector('input[type="password"]');
             toggleBtn.addEventListener("click", () => {
-                passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+                withDoubleConfirmation(() => {
+                    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+                });
             });
             // Add handle copy buttons
             row.querySelectorAll(".copy-btn").forEach(copyBtn => {
                 copyBtn.addEventListener("click", () => {
-                    const input = copyBtn.parentElement.querySelector("input");
-                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    withDoubleConfirmation(() => {
+                        const input = copyBtn.parentElement.querySelector("input");
+                        navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    });
                 });
             });
             // Add delete button
             const deleteBtn = row.querySelector(".delete-btn");
             deleteBtn.addEventListener("click", () => {
-                if(confirm(`Are you sure you want to delete account on resource "${account.resource}"?`)) {
-                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                withDoubleConfirmation(() => {
+                    if(confirm(`Are you sure you want to delete account on resource "${account.resource}"?`)) {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-                    fetch(`/account/delete-account/${account.id}`, {
-                        method: "DELETE",
-                        headers: {
-                            [csrfHeader]: csrfToken
-                        }
-                    })
-                    .then(response => response.text())
-                    .then(data => {
-                        if(data === "OK") {
-                            row.remove();
-                            alert("Account deleted.");
-                        } else {
-                            alert("Failed to delete: " + data);
-                        }
-                    });
-                }
+                        fetch(`/account/delete-account/${account.id}`, {
+                            method: "DELETE",
+                            headers: {
+                                [csrfHeader]: csrfToken
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            if(data === "OK") {
+                                row.remove();
+                                alert("Account deleted.");
+                            } else {
+                                alert("Failed to delete: " + data);
+                            }
+                        });
+                    }
+                });
             });
             // Add edit button
             const editBtn = row.querySelector(".edit-btn");
             editBtn.addEventListener("click", () => {
-                showAccountDialog(account);
+                withDoubleConfirmation(() => {
+                    showAccountDialog(account);
+                });
             });
         });
     }
@@ -487,8 +539,10 @@ window.onload = function () {
             // Copy buttons
             row.querySelectorAll(".copy-btn").forEach(copyBtn => {
                 copyBtn.addEventListener("click", () => {
-                    const input = copyBtn.parentElement.querySelector("input");
-                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    withDoubleConfirmation(() => {
+                        const input = copyBtn.parentElement.querySelector("input");
+                        navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    });
                 });
             });
             // Toggle password visibility ( CVV & PIN )
@@ -496,35 +550,41 @@ window.onload = function () {
             const passwordInputs = row.querySelectorAll('input[type="password"]');
             toggleBtns.forEach((toggleBtn, idx) => {
                 toggleBtn.addEventListener("click", () => {
-                    const input = passwordInputs[idx];
-                    input.type = input.type === "password" ? "text" : "password";
+                    withDoubleConfirmation(() => {
+                        const input = passwordInputs[idx];
+                        input.type = input.type === "password" ? "text" : "password";
+                    });
                 });
             });
             // Delete card
             const deleteBtn = row.querySelector(".delete-btn");
             deleteBtn.addEventListener("click", () => {
-                if(confirm(`Are you sure you want to delete card for resource "${card.resource}"?`)) {
-                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                    fetch(`/account/delete-card/${card.id}`, {
-                        method: "DELETE",
-                        headers: { [csrfHeader]: csrfToken }
-                    })
-                    .then(response => response.text())
-                    .then(data => {
-                        if(data === "OK") {
-                            row.remove();
-                            alert("Card deleted.");
-                        } else {
-                            alert("Failed to delete: " + data);
-                        }
-                    });
-                }
+                withDoubleConfirmation(() => {
+                    if(confirm(`Are you sure you want to delete card for resource "${card.resource}"?`)) {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                        fetch(`/account/delete-card/${card.id}`, {
+                            method: "DELETE",
+                            headers: { [csrfHeader]: csrfToken }
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            if(data === "OK") {
+                                row.remove();
+                                alert("Card deleted.");
+                            } else {
+                                alert("Failed to delete: " + data);
+                            }
+                        });
+                    }
+                });
             });
             // Edit card
             const editBtn = row.querySelector(".edit-btn");
             editBtn.addEventListener("click", () => {
-                showCardDialog(card);
+                withDoubleConfirmation(() => {
+                    showCardDialog(card);
+                });
             });
         });
     }
@@ -557,35 +617,41 @@ window.onload = function () {
             // Copy button
             row.querySelectorAll(".copy-btn").forEach(copyBtn => {
                 copyBtn.addEventListener("click", () => {
-                    const input = copyBtn.parentElement.querySelector("input");
-                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    withDoubleConfirmation(() => {
+                        const input = copyBtn.parentElement.querySelector("input");
+                        navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    });
                 });
             });
             // Delete link
             const deleteBtn = row.querySelector(".delete-btn");
             deleteBtn.addEventListener("click", () => {
-                if(confirm(`Are you sure you want to delete link for resource "${link.resource}"?`)) {
-                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                    fetch(`/account/delete-link/${link.id}`, {
-                        method: "DELETE",
-                        headers: { [csrfHeader]: csrfToken }
-                    })
-                    .then(response => response.text())
-                    .then(data => {
-                        if(data === "OK") {
-                            row.remove();
-                            alert("Link deleted.");
-                        } else {
-                            alert("Failed to delete: " + data);
-                        }
-                    });
-                }
+                withDoubleConfirmation(() => {
+                    if(confirm(`Are you sure you want to delete link for resource "${link.resource}"?`)) {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                        fetch(`/account/delete-link/${link.id}`, {
+                            method: "DELETE",
+                            headers: { [csrfHeader]: csrfToken }
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            if(data === "OK") {
+                                row.remove();
+                                alert("Link deleted.");
+                            } else {
+                                alert("Failed to delete: " + data);
+                            }
+                        });
+                    }
+                });
             });
             // Edit link
             const editBtn = row.querySelector(".edit-btn");
             editBtn.addEventListener("click", () => {
-                showLinkDialog(link);
+                withDoubleConfirmation(() => {
+                    showLinkDialog(link);
+                });
             });
         });
     }
@@ -627,40 +693,48 @@ window.onload = function () {
             const toggleBtn = row.querySelector(".toggle-btn");
             const passwordInput = row.querySelector('input[type="password"]');
             toggleBtn.addEventListener("click", () => {
-                passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+                withDoubleConfirmation(() => {
+                    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+                });
             });
             // Copy button
             row.querySelectorAll(".copy-btn").forEach(copyBtn => {
                 copyBtn.addEventListener("click", () => {
-                    const input = copyBtn.parentElement.querySelector("input");
-                    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    withDoubleConfirmation(() => {
+                        const input = copyBtn.parentElement.querySelector("input");
+                        navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+                    });
                 });
             });
             // Delete button
             const deleteBtn = row.querySelector(".delete-btn");
             deleteBtn.addEventListener("click", () => {
-                if(confirm(`Are you sure you want to delete wallet for resource "${wallet.resource}"?`)) {
-                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                    fetch(`/account/delete-wallet/${wallet.id}`, {
-                        method: "DELETE",
-                        headers: { [csrfHeader]: csrfToken }
-                    })
-                    .then(response => response.text())
-                    .then(data => {
-                        if(data === "OK") {
-                            row.remove();
-                            alert("Wallet deleted");
-                        } else {
-                            alert("Failed to delete: " + data);
-                        }
-                    });
-                }
+                withDoubleConfirmation(() => {
+                    if(confirm(`Are you sure you want to delete wallet for resource "${wallet.resource}"?`)) {
+                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                        fetch(`/account/delete-wallet/${wallet.id}`, {
+                            method: "DELETE",
+                            headers: { [csrfHeader]: csrfToken }
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            if(data === "OK") {
+                                row.remove();
+                                alert("Wallet deleted");
+                            } else {
+                                alert("Failed to delete: " + data);
+                            }
+                        });
+                    }
+                });
             });
             // Edit button
             const editBtn = row.querySelector(".edit-btn");
             editBtn.addEventListener("click", () => {
-                showWalletDialog(wallet);
+                withDoubleConfirmation(() => {
+                    showWalletDialog(wallet);
+                });
             });
         });
     }
@@ -688,177 +762,138 @@ window.onload = function () {
 
         prefsTabs.forEach(tab => {
             tab.addEventListener("click", () => {
-                const tabType = tab.getAttribute("data-tab");
-                if (tabType === "account") {
-                    // Fetch user info from backend
-                    fetch("/account/me")
-                        .then(res => res.json())
-                        .then(user => {
-                            renderAccountInfo(user);
-                        });
-                        function renderAccountInfo(user) {
-                            prefsContent.innerHTML = `
-                                <div class="horizontal-group">
-                                    <label class="form-label">Email:</label>
-                                    <input class="form-input" id="userEmail" type="email" value="${user.email}" readonly>
-                                    <button class="form-button" id="editAccountBtn">Edit:</button>
-                                </div>
-                                <div class="horizontal-group">
-                                    <label class="form-label">Username:</label>
-                                    <input class="form-input" id="userUsername" type="text" value="${user.username}" readonly>
-                                </div>
-                                <div class="horizontal-group">
-                                    <label class="form-label">Password:</label>
-                                    <input class="form-input" id="userPassword" type="password" value="${user.password}" readonly>
-                                    <button class="form-button" id="showPasswordBtn">Show</button>
-                                </div>
-                                <div class="horizontal-group">
-                                    <label class="form-label">Additional password:</label>
-                                    <input class="form-input" id="userAdditionalPassword" type="password" value="${user.additionalPassword}" readonly>
-                                    <button class="form-button" id="showAdditionalPassword">Show</button>
-                                </div>
-                            `;
-                            // show/hide password
-                            document.getElementById("showPasswordBtn").addEventListener("click", function () {
-                                const pwInput = document.getElementById("userPassword");
-                                pwInput.type = pwInput.type === "password" ? "text" : "password";
-                                this.textContent = pwInput.type === "password" ? "Show" : "Hide";
+                withDoubleConfirmation(() => {
+                    const tabType = tab.getAttribute("data-tab");
+                    if (tabType === "account") {
+                        // Fetch user info from backend
+                        fetch("/account/me")
+                            .then(res => res.json())
+                            .then(user => {
+                                renderAccountInfo(user);
                             });
-                            document.getElementById("showAdditionalPassword").addEventListener("click", function () {
-                                const pwInput = document.getElementById("userAdditionalPassword");
-                                pwInput.type = pwInput.type === "password" ? "text" : "password";
-                                this.textContent = pwInput.type === "password" ? "Show" : "Hide";
-                            });
-                            // Edit button logic
-                            document.getElementById("editAccountBtn").addEventListener("click", function () {
-                                // Enable fields
-                                document.getElementById("userEmail").readOnly = false;
-                                document.getElementById("userUsername").readOnly = false;
-                                document.getElementById("userPassword").readOnly = false;
-                                document.getElementById("userAdditionalPassword").readOnly = false;
-                                // Replace edit button
-                                this.style.display = "none";
-                                // Add save and cansel buttons in the same row
-                                const emailGroup = this.parentElement;
-                                const saveBtn = document.createElement("button");
-                                saveBtn.className = "form-button";
-                                saveBtn.textContent = "Save";
-                                emailGroup.appendChild(saveBtn);
-
-                                const cancelBtn = document.createElement("button");
-                                cancelBtn.className = "form-button";
-                                cancelBtn.textContent = "Cancel";
-                                emailGroup.appendChild(cancelBtn);
-                                // Handle cancel
-                                cancelBtn.addEventListener("click", function () {
-                                    fetch("/account/me")
-                                        .then(res => res.json())
-                                        .then(u => renderAccountInfo(u));
+                            function renderAccountInfo(user) {
+                                prefsContent.innerHTML = `
+                                    <div class="horizontal-group">
+                                        <label class="form-label">Email:</label>
+                                        <input class="form-input" id="userEmail" type="email" value="${user.email}" readonly>
+                                        <button class="form-button" id="editAccountBtn">Edit:</button>
+                                    </div>
+                                    <div class="horizontal-group">
+                                        <label class="form-label">Username:</label>
+                                        <input class="form-input" id="userUsername" type="text" value="${user.username}" readonly>
+                                    </div>
+                                    <div class="horizontal-group">
+                                        <label class="form-label">Password:</label>
+                                        <input class="form-input" id="userPassword" type="password" value="${user.password}" readonly>
+                                        <button class="form-button" id="showPasswordBtn">Show</button>
+                                    </div>
+                                    <div class="horizontal-group">
+                                        <label class="form-label">Additional password:</label>
+                                        <input class="form-input" id="userAdditionalPassword" type="password" value="${user.additionalPassword}" readonly>
+                                        <button class="form-button" id="showAdditionalPassword">Show</button>
+                                    </div>
+                                `;
+                                // show/hide password
+                                document.getElementById("showPasswordBtn").addEventListener("click", function () {
+                                    const pwInput = document.getElementById("userPassword");
+                                    pwInput.type = pwInput.type === "password" ? "text" : "password";
+                                    this.textContent = pwInput.type === "password" ? "Show" : "Hide";
                                 });
-                                // Handle save
-                                saveBtn.addEventListener("click", function () {
-                                    const newEmail = document.getElementById("userEmail").value.trim();
-                                    const newUsername = document.getElementById("userUsername").value.trim();
-                                    const newPassword = document.getElementById("userPassword").value.trim();
-                                    const newAdditionalPassword = document.getElementById("userAdditionalPassword").value.trim();
-                                    // Validation
-                                    if (!newEmail || !newUsername) {
-                                        alert("Email and username cannot be empty");
-                                        return;
-                                    }
-                                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                                    fetch("/account/update-account-info", {
-                                        method: "POST",
-                                        headers: {
-                                            "Content-type": "application/json",
-                                            [csrfHeader]: csrfToken
-                                        },
-                                        body: JSON.stringify({
-                                            email: newEmail,
-                                            username: newUsername,
-                                            password: newPassword,
-                                            additionalPassword: newAdditionalPassword
-                                        })
-                                    })
-                                    .then(res => res.text())
-                                    .then(result => {
-                                        if (result === "OK") {
-                                            alert("Account info updated!");
-                                            fetch("/account/me")
-                                                .then(res => res.json())
-                                                .then(u => renderAccountInfo(u));
-                                        } else if (result === "USERNAME_CHANGED") {
-                                            alert("Username changed. Please log in again.");
-                                            fetch("/logout", {
-                                                method: "POST",
-                                                headers: {
-                                                    [csrfHeader]: csrfToken
-                                                }
-                                            }).then(() => {
-                                                window.location.href = "/login";
-                                            });
-                                        } else {
-                                            alert(result);
+                                document.getElementById("showAdditionalPassword").addEventListener("click", function () {
+                                    const pwInput = document.getElementById("userAdditionalPassword");
+                                    pwInput.type = pwInput.type === "password" ? "text" : "password";
+                                    this.textContent = pwInput.type === "password" ? "Show" : "Hide";
+                                });
+                                // Edit button logic
+                                document.getElementById("editAccountBtn").addEventListener("click", function () {
+                                    // Enable fields
+                                    document.getElementById("userEmail").readOnly = false;
+                                    document.getElementById("userUsername").readOnly = false;
+                                    document.getElementById("userPassword").readOnly = false;
+                                    document.getElementById("userAdditionalPassword").readOnly = false;
+                                    // Replace edit button
+                                    this.style.display = "none";
+                                    // Add save and cansel buttons in the same row
+                                    const emailGroup = this.parentElement;
+                                    const saveBtn = document.createElement("button");
+                                    saveBtn.className = "form-button";
+                                    saveBtn.textContent = "Save";
+                                    emailGroup.appendChild(saveBtn);
+
+                                    const cancelBtn = document.createElement("button");
+                                    cancelBtn.className = "form-button";
+                                    cancelBtn.textContent = "Cancel";
+                                    emailGroup.appendChild(cancelBtn);
+                                    // Handle cancel
+                                    cancelBtn.addEventListener("click", function () {
+                                        fetch("/account/me")
+                                            .then(res => res.json())
+                                            .then(u => renderAccountInfo(u));
+                                    });
+                                    // Handle save
+                                    saveBtn.addEventListener("click", function () {
+                                        const newEmail = document.getElementById("userEmail").value.trim();
+                                        const newUsername = document.getElementById("userUsername").value.trim();
+                                        const newPassword = document.getElementById("userPassword").value.trim();
+                                        const newAdditionalPassword = document.getElementById("userAdditionalPassword").value.trim();
+                                        // Validation
+                                        if (!newEmail || !newUsername) {
+                                            alert("Email and username cannot be empty");
+                                            return;
                                         }
+                                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                                        fetch("/account/update-account-info", {
+                                            method: "POST",
+                                            headers: {
+                                                "Content-type": "application/json",
+                                                [csrfHeader]: csrfToken
+                                            },
+                                            body: JSON.stringify({
+                                                email: newEmail,
+                                                username: newUsername,
+                                                password: newPassword,
+                                                additionalPassword: newAdditionalPassword
+                                            })
+                                        })
+                                        .then(res => res.text())
+                                        .then(result => {
+                                            if (result === "OK") {
+                                                alert("Account info updated!");
+                                                fetch("/account/me")
+                                                    .then(res => res.json())
+                                                    .then(u => renderAccountInfo(u));
+                                            } else if (result === "USERNAME_CHANGED") {
+                                                alert("Username changed. Please log in again.");
+                                                fetch("/logout", {
+                                                    method: "POST",
+                                                    headers: {
+                                                        [csrfHeader]: csrfToken
+                                                    }
+                                                }).then(() => {
+                                                    window.location.href = "/login";
+                                                });
+                                            } else {
+                                                alert(result);
+                                            }
+                                        });
+
                                     });
 
                                 });
-
-                            });
-                        }
-                } else if (tabType === "security") {
-                    prefsContent.innerHTML = `
-                        <button class="form-button" id="doubleConfirmBtn">Double confirmation</button>
-                        <button class="form-button" id="storeLogsBtn">Store logs</button>
-                        <button class="form-button" id="clearLogsBtn">Clear logs</button>
-                    `;
-                    // Double confirmation checkbox logic
-                    document.getElementById("doubleConfirmBtn").addEventListener("click", function() {
-                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                        fetch("/settings/toggle-double-confirmation", {
-                            method: "POST",
-                            headers: {
-                                [csrfHeader]: csrfToken
                             }
-                        })
-                        .then(response => response.text())
-                        .then(data => {
-                            if(data === "OK") {
-                                alert("Double confirmation setting toggled");
-                            } else {
-                                alert("Error toggling double confirmation");
-                            }
-                        });
-                    });
-                    // Store logs checkbox logic
-                    document.getElementById("storeLogsBtn").addEventListener("click", function() {
-                        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-                        fetch("/settings/toggle-store-logs", {
-                            method: "POST",
-                            headers: {
-                                [csrfHeader]: csrfToken
-                            }
-                        })
-                        .then(response => response.text())
-                        .then(data => {
-                            if (data === "OK") {
-                                alert("Store logs setting toggled");
-                            } else {
-                                alert("Error toggling store logs");
-                            }
-                        });
-                    });
-                    // Clear logs button logic
-                    document.getElementById("clearLogsBtn").addEventListener("click", function(){
-                        if(confirm("Are you sure you want to clear all logs?")) {
+                    } else if (tabType === "security") {
+                        prefsContent.innerHTML = `
+                            <button class="form-button" id="doubleConfirmBtn">Double confirmation</button>
+                            <button class="form-button" id="storeLogsBtn">Store logs</button>
+                            <button class="form-button" id="clearLogsBtn">Clear logs</button>
+                        `;
+                        // Double confirmation checkbox logic
+                        document.getElementById("doubleConfirmBtn").addEventListener("click", function() {
                             const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
                             const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
-                            fetch("/account/clear-logs", {
-                                method: "GET",
+                            fetch("/settings/toggle-double-confirmation", {
+                                method: "POST",
                                 headers: {
                                     [csrfHeader]: csrfToken
                                 }
@@ -866,26 +901,68 @@ window.onload = function () {
                             .then(response => response.text())
                             .then(data => {
                                 if(data === "OK") {
-                                    alert("Logs cleared!");
-                                    if(document.getElementById("logsPanel") && !document.getElementById("logsPanel").classList.contains("hidden")) {
-                                        loadLogs();
-                                    }
+                                    alert("Double confirmation setting toggled");
+                                    fetchDoubleConfirmationSettings();
                                 } else {
-                                    alert("Failed to clear logs: " + data);
+                                    alert("Error toggling double confirmation");
+                                }
+                            });
+                        });
+                        // Store logs checkbox logic
+                        document.getElementById("storeLogsBtn").addEventListener("click", function() {
+                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                            fetch("/settings/toggle-store-logs", {
+                                method: "POST",
+                                headers: {
+                                    [csrfHeader]: csrfToken
                                 }
                             })
-                            .catch(error => {
-                                alert("Request failed: " + error);
+                            .then(response => response.text())
+                            .then(data => {
+                                if (data === "OK") {
+                                    alert("Store logs setting toggled");
+                                } else {
+                                    alert("Error toggling store logs");
+                                }
                             });
-                        }
-                    });
-                } else if (tabType === "theme") {
-                    prefsContent.innerHTML = `
-                        <label class="form-label">Click to switch the theme:</label><br>
-                        <button class="form-button" id="themeSwitchBtn">Switch Theme</button>
-                    `;
-                    document.getElementById("themeSwitchBtn").addEventListener("click", toggleTheme);
-                }
+                        });
+                        // Clear logs button logic
+                        document.getElementById("clearLogsBtn").addEventListener("click", function(){
+                            if(confirm("Are you sure you want to clear all logs?")) {
+                                const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                                fetch("/account/clear-logs", {
+                                    method: "GET",
+                                    headers: {
+                                        [csrfHeader]: csrfToken
+                                    }
+                                })
+                                .then(response => response.text())
+                                .then(data => {
+                                    if(data === "OK") {
+                                        alert("Logs cleared!");
+                                        if(document.getElementById("logsPanel") && !document.getElementById("logsPanel").classList.contains("hidden")) {
+                                            loadLogs();
+                                        }
+                                    } else {
+                                        alert("Failed to clear logs: " + data);
+                                    }
+                                })
+                                .catch(error => {
+                                    alert("Request failed: " + error);
+                                });
+                            }
+                        });
+                    } else if (tabType === "theme") {
+                        prefsContent.innerHTML = `
+                            <label class="form-label">Click to switch the theme:</label><br>
+                            <button class="form-button" id="themeSwitchBtn">Switch Theme</button>
+                        `;
+                        document.getElementById("themeSwitchBtn").addEventListener("click", toggleTheme);
+                    }
+                });
             });
         });
     }
@@ -1240,6 +1317,49 @@ window.onload = function () {
                 }
             });
         });
+    }
+    function showAdditionalPasswordDialog(onSuccess, onCancel) {
+        // Remove existing dialog if any
+        let existing = document.getElementById("additionalPwdDialog");
+        if (existing) existing.remove();
+        // Create overlay
+        const overlay = document.createElement("div");
+        overlay.id = "additionalPwdDialog";
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.background = "rgba(0,0,0,0.6)";
+        overlay.style.zIndex = "9999";
+        overlay.style.display = "flex";
+        overlay.style.justifyContent = "center";
+        overlay.style.alignItems = "center";
+        // Create dialog
+        const dialog = document.createElement("div");
+        dialog.style.background = "#222";
+        dialog.style.padding = "32px";
+        dialog.style.borderRadius = "12px";
+        dialog.style.boxShadow = "0 0 20px #000";
+        dialog.innerHTML = `
+            <h3>Double Confirmation</h3>
+            <p>Enter your additional password:</p>
+            <input type="password" id="additionalPwdInput" class="form-input" style="margin-bottom:12px;width:90%;" autofocus>
+            <br>
+            <button class="form-button" id="additionalPwdOK">OK</button>
+            <button class="form-button" id="additionalPwdCancel">Cancel</button>
+        `;
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+
+        document.getElementById("additionalPwdOK").onclick = () => {
+            const pwd = document.getElementById("additionalPwdInput").value;
+            onSuccess(pwd, () => overlay.remove());
+        };
+        document.getElementById("additionalPwdCancel").onclick = () => {
+            overlay.remove();
+            if (onCancel) onCancel();
+        };
     }
 };
 

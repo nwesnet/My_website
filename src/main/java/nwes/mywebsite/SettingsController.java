@@ -3,6 +3,8 @@ package nwes.mywebsite;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/settings")
@@ -15,6 +17,14 @@ public class SettingsController {
     public UserSettings get(Principal principal) {
         System.out.println("Getting settings for user: " + principal.getName());
         return userSettingsService.getOrCreate(principal.getName());
+    }
+    @GetMapping("/get-double-confirmation")
+    @ResponseBody
+    public Map<String, Boolean> getDoubleConfirmationSettings(Principal principal) {
+        UserSettings settings = userSettingsService.getOrCreate(principal.getName());
+        Map<String, Boolean> map = new HashMap<>();
+        map.put("enabled", settings.isDoubleConfirmation());
+        return map;
     }
     @PostMapping
     public String update(@RequestBody UserSettings partial, Principal principal) {

@@ -413,6 +413,17 @@ public class PasswordManagerController {
 
         return usernameChanged ? "USERNAME_CHANGED" : "OK";
     }
+    @PostMapping("/verify-additional-password")
+    @ResponseBody
+    public Map<String, Boolean> verifyAdditionalPassword(@RequestBody Map<String, String> body, Principal principal) {
+        String additionalPassword = body.get("additionalPassword");
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        boolean ok = user.getAdditionalPassword().equals(additionalPassword);
+        Map<String, Boolean> result = new HashMap<>();
+        result.put("ok", ok);
+        return result;
+    }
     @GetMapping("/logs")
     @ResponseBody
     public List<String> getLogs(Principal principal) {
