@@ -25,5 +25,11 @@ public class UserService {
         user.setAdditionalPassword(user.getAdditionalPassword());
         repo.save(user);
     }
+    public boolean emailExists(String email) {
+        return repo.findByEmail(email).isPresent();
+    }
+    public boolean usernameExists(String username) {
+        return repo.findByUsername(username).isPresent();
+    }
 }
 
