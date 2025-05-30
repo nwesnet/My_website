@@ -16,6 +16,8 @@ public class AccountService {
         this.cryptoService = cryptoService;
     }
     public void saveAccount(Account account) {
+        System.out.println("Saving account: " + account.getResource() + ", date: " + account.getDateAdded());
+        // ... encryption and saving logic
         try {
             SecretKey key = cryptoService.getKeyFromString(account.getUser().getUsername() + account.getUser().getPassword());
             account.setResource(cryptoService.encrypt(account.getResource(), key));
@@ -27,9 +29,19 @@ public class AccountService {
         }
 
     }
+    public void saveSyncAccount(Account account) {
+        Optional<Account> existing = accountRepository
+                .findByUserAndResourceAndUsernameAndPassword(
+                        account.getUser(), account.getResource(), account.getUsername(), account.getPassword()
+                );
+        if (existing.isEmpty()) {
+            accountRepository.save(account);
+        }
+    }
     public void deleteAccount(Long id){
         accountRepository.deleteById(id);
     }
+
     public List<Account> getAccountsByUser(User user) {
         List<Account> encryptedAccounts = accountRepository.findByUser(user);
         try {
@@ -43,6 +55,10 @@ public class AccountService {
             throw new RuntimeException("Decryption failed: ", e);
         }
         return encryptedAccounts;
+    }
+
+    public List<Account> getSyncAccountsByUser(User user) {
+        return accountRepository.findByUser(user);
     }
     public Optional<Account> find(Long id) {
         return accountRepository.findById(id);

@@ -34,9 +34,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CustomLoginSuccessHandler successHandler) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/register"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/register", "/api/sync-accounts"))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/register", "/api/register", "/api/connectivityCheck", "/login", "/css/**", "/img/**","/js/**", "/projects/**", "/patches").permitAll()
+                        .requestMatchers("/", "/register", "/api/**", "/login", "/css/**", "/img/**","/js/**", "/projects/**", "/patches").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

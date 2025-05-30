@@ -3,17 +3,26 @@ package nwes.mywebsite;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api")
 public class DesktopApiController {
     private final UserService userService;
-    public DesktopApiController(UserService userService) {
+    private final AccountService accountService;
+    public DesktopApiController(
+            UserService userService,
+            AccountService accountService
+    ) {
         this.userService = userService;
+        this.accountService = accountService;
     }
     @GetMapping("/connectivityCheck")
     public ResponseEntity<String> checkConnectivity() {
         return ResponseEntity.ok("Connection successful");
     }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         System.out.println("API REGISTER endpoint hit: " + req.getUsername());
@@ -49,5 +58,27 @@ public class DesktopApiController {
 
         // Send OK (desktop app will know it's fine)
         return ResponseEntity.ok("Registration successful");
+    }
+
+    @PostMapping("/sync-accounts")
+    public ResponseEntity<?> syncAccounts(
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestBody List<Account> desktopAccounts
+    ) {
+        System.out.println("Received sync from desktop for user: " + username);
+        System.out.println("Accounts received: " + desktopAccounts.size());
+        // ...rest of code
+        User user = userService.findByUsername(username)
+                .filter(u -> u.getPassword().equals(password))
+                .orElseThrow(() -> new RuntimeException("Unauthorized"));
+
+        for (Account account : desktopAccounts) {
+            account.setUser(user);
+            accountService.saveSyncAccount(account);
+        }
+
+        List<Account> allAccounts = accountService.getSyncAccountsByUser(user);
+        return ResponseEntity.ok(allAccounts);
     }
 }

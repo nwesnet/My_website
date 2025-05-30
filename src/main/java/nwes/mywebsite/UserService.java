@@ -3,6 +3,8 @@ package nwes.mywebsite;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UserService {
 
@@ -30,6 +32,9 @@ public class UserService {
     }
     public boolean usernameExists(String username) {
         return repo.findByUsername(username).isPresent();
+    }
+    public Optional<User> findByUsername(String username) {
+        return repo.findByUsername(username);
     }
 }
 

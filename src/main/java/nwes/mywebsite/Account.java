@@ -14,6 +14,7 @@ public class Account {
     private String resource;
     private String username;
     private String password;
+    @Column(name = "date_added")
     private LocalDateTime dateAdded;
 
     @ManyToOne
