@@ -79,6 +79,15 @@ public class DesktopApiController {
         }
 
         List<Account> allAccounts = accountService.getSyncAccountsByUser(user);
-        return ResponseEntity.ok(allAccounts);
+        for (Account acc: allAccounts) {
+            if ("true".equalsIgnoreCase(acc.getDeleted())) {
+                accountService.deleteAccount(acc.getId());
+            }
+        }
+        List<Account> nonDeletedAccounts = allAccounts.stream()
+                .filter(acc -> !"true".equalsIgnoreCase(acc.getDeleted()))
+                .toList();
+
+        return ResponseEntity.ok(nonDeletedAccounts);
     }
 }

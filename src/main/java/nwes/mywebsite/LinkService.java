@@ -24,7 +24,7 @@ public class LinkService {
             throw new RuntimeException("Encryption failed: ", e);
         }
     }
-    public void deleteLink(Long id) {
+    public void deleteLink(String id) {
         linkRepository.deleteById(id);
     }
     public List<Link> getLinksByUser(User user) {
@@ -40,7 +40,7 @@ public class LinkService {
         }
         return encryptedLinks;
     }
-    public Optional<Link> find(Long id) {
+    public Optional<Link> find(String id) {
         return linkRepository.findById(id);
     }
 }

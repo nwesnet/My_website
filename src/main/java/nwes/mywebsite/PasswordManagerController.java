@@ -2,11 +2,14 @@ package nwes.mywebsite;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import javax.management.DescriptorKey;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/account")
@@ -48,11 +51,15 @@ public class PasswordManagerController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Account account = new Account();
+        account.setUser(user);
+        account.setId(UUID.randomUUID().toString());
         account.setResource(resource);
         account.setUsername(username);
         account.setPassword(password);
-        account.setUser(user);
         account.setDateAdded(LocalDateTime.now());
+        account.setLastModified(LocalDateTime.now());
+        account.setDeleted("false");
+        account.setSync("true");
 
         accountService.saveAccount(account);
 
@@ -80,6 +87,8 @@ public class PasswordManagerController {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Card card = new Card();
+        card.setUser(user);
+        card.setId(UUID.randomUUID().toString());
         card.setResource(resource);
         card.setCardNumber(cardNumber);
         card.setExpiryDate(expiryDate);
@@ -88,8 +97,10 @@ public class PasswordManagerController {
         card.setCardPin(cardPin);
         card.setCardNetwork(cardNetwork);
         card.setCardType(cardType);
-        card.setUser(user);
         card.setDateAdded(LocalDateTime.now());
+        card.setLastModified(LocalDateTime.now());
+        card.setDeleted("false");
+        card.setSync("true");
 
         cardService.saveCard(card);
 
@@ -111,10 +122,14 @@ public class PasswordManagerController {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Link link = new Link();
+        link.setUser(user);
+        link.setId(UUID.randomUUID().toString());
         link.setResource(resource);
         link.setLink(linkURL);
-        link.setLocalDateTime(LocalDateTime.now());
-        link.setUser(user);
+        link.setDateAdded(LocalDateTime.now());
+        link.setLastModified(LocalDateTime.now());
+        link.setDeleted("false");
+        link.setSync("true");
 
         linkService.saveLink(link);
 
@@ -137,12 +152,16 @@ public class PasswordManagerController {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Wallet wallet = new Wallet();
+        wallet.setUser(user);
+        wallet.setId(UUID.randomUUID().toString());
         wallet.setResource(resource);
         wallet.setKeyWords(keyWords);
         wallet.setAddress(address);
         wallet.setPassword(password);
-        wallet.setLocalDateTime(LocalDateTime.now());
-        wallet.setUser(user);
+        wallet.setDateAdded(LocalDateTime.now());
+        wallet.setLastModified(LocalDateTime.now());
+        wallet.setDeleted("false");
+        wallet.setSync("true");
 
         walletService.saveWallet(wallet);
 
@@ -155,10 +174,12 @@ public class PasswordManagerController {
     }
     @GetMapping("/list-accounts")
     @ResponseBody
-    public List<Account> getAccounts(Principal principal) {
+    public List<Account> getAccounts(
+            Principal principal
+    ) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return accountService.getAccountsByUser(user);
+        return accountService.getAccountsByUser(user, true, false);
     }
     @GetMapping("/list-cards")
     @ResponseBody
@@ -184,7 +205,7 @@ public class PasswordManagerController {
     @PostMapping("/update-account")
     @ResponseBody
     public String updateAccount(
-            @RequestParam Long id,
+            @RequestParam String id,
             @RequestParam String resource,
             @RequestParam String username,
             @RequestParam String password,
@@ -199,6 +220,7 @@ public class PasswordManagerController {
         account.setResource(resource);
         account.setUsername(username);
         account.setPassword(password);
+        account.setLastModified(LocalDateTime.now());
 
         accountService.saveAccount(account);
 
@@ -211,14 +233,14 @@ public class PasswordManagerController {
     }
     @DeleteMapping("/delete-account/{id}")
     @ResponseBody
-    public String deleteAccount(@PathVariable Long id, Principal principal) {
+    public String deleteAccount(@PathVariable String id, Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Account account = accountService.find(id).orElseThrow(() -> new RuntimeException("Account not found"));
         if(!account.getUser().getId().equals(user.getId())) {
             return "Unauthorized";
         }
-        accountService.deleteAccount(id);
+        accountService.softDeleteAccount(id, user);
 
         UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
         if (userSettings.isStoreLogs()) {
@@ -230,7 +252,7 @@ public class PasswordManagerController {
     @PostMapping("/update-card")
     @ResponseBody
     public String updateCard(
-            @RequestParam Long id,
+            @RequestParam String id,
             @RequestParam String resource,
             @RequestParam String cardNumber,
             @RequestParam String expiryDate,
@@ -255,6 +277,7 @@ public class PasswordManagerController {
         card.setCardPin(cardPin);
         card.setCardNetwork(cardNetwork);
         card.setCardType(cardType);
+        card.setLastModified(LocalDateTime.now());
 
         cardService.saveCard(card);
 
@@ -267,7 +290,7 @@ public class PasswordManagerController {
     }
     @DeleteMapping("/delete-card/{id}")
     @ResponseBody
-    public String deleteCard(@PathVariable Long id, Principal principal) {
+    public String deleteCard(@PathVariable String id, Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Card card = cardService.find(id).orElseThrow(() -> new RuntimeException("Card not found"));
@@ -286,7 +309,7 @@ public class PasswordManagerController {
     @PostMapping("/update-link")
     @ResponseBody
     public String updateLink(
-            @RequestParam Long id,
+            @RequestParam String id,
             @RequestParam String resource,
             @RequestParam String linkURL,
             Principal principal
@@ -299,6 +322,8 @@ public class PasswordManagerController {
         }
         link.setResource(resource);
         link.setLink(linkURL);
+        link.setLastModified(LocalDateTime.now());
+
         linkService.saveLink(link);
 
         UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
@@ -310,7 +335,7 @@ public class PasswordManagerController {
     }
     @DeleteMapping("/delete-link/{id}")
     @ResponseBody
-    public String deleteLink(@PathVariable Long id, Principal principal) {
+    public String deleteLink(@PathVariable String id, Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Link link = linkService.find(id).orElseThrow(() -> new RuntimeException("Link not found"));
@@ -329,7 +354,7 @@ public class PasswordManagerController {
     @PostMapping("/update-wallet")
     @ResponseBody
     public String updateWallet(
-            @RequestParam Long id,
+            @RequestParam String id,
             @RequestParam String resource,
             @RequestParam String keyWords,
             @RequestParam String address,
@@ -346,6 +371,8 @@ public class PasswordManagerController {
         wallet.setKeyWords(keyWords);
         wallet.setAddress(address);
         wallet.setPassword(password);
+        wallet.setLastModified(LocalDateTime.now());
+
         walletService.saveWallet(wallet);
 
         UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
@@ -357,7 +384,7 @@ public class PasswordManagerController {
     }
     @DeleteMapping("/delete-wallet/{id}")
     @ResponseBody
-    public String deleteWallet(@PathVariable Long id, Principal principal) {
+    public String deleteWallet(@PathVariable String id, Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Wallet wallet = walletService.find(id).orElseThrow(() -> new RuntimeException("Wallet not found"));

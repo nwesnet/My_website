@@ -27,7 +27,7 @@ public class WalletService {
         }
 
     }
-    public void deleteWallet(Long id) {
+    public void deleteWallet(String id) {
         walletRepository.deleteById(id);
     }
     public List<Wallet> getWalletsByUser(User user) {
@@ -45,7 +45,7 @@ public class WalletService {
         }
         return encryptedWallets;
     }
-    public Optional<Wallet> find(Long id) {
+    public Optional<Wallet> find(String id) {
         return walletRepository.findById(id);
     }
 

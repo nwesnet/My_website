@@ -31,7 +31,7 @@ public class CardService {
             throw new RuntimeException("Encryption failed: ", e);
         }
     }
-    public void deleteCard(Long id) {
+    public void deleteCard(String id) {
         cardRepository.deleteById(id);
     }
     public List<Card> getCardsByUser(User user) {
@@ -53,7 +53,7 @@ public class CardService {
         }
         return encryptedCards;
     }
-    public Optional<Card> find(Long id) {
+    public Optional<Card> find(String id) {
         return cardRepository.findById(id);
     }
 }
