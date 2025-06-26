@@ -9,4 +9,8 @@ import java.util.Optional;
 public interface AccountRepository extends JpaRepository<Account, String> {
     List<Account> findByUser(User user);
     Optional<Account> findByUserAndResourceAndUsernameAndPassword(User user, String resource, String username, String password);
+    Optional<Account> findByUserAndResourceAndUsernameAndPasswordAndIdNot(
+            User user, String resource, String username, String password, String id
+    );
+
 }

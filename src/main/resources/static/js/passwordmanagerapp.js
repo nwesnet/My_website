@@ -60,7 +60,7 @@ window.onload = function () {
         const formWrapper = document.createElement("div");
         formWrapper.innerHTML = `
             <h2>Add Information</h2>
-            <label for="entryType" class="form-label">Select type:</label>
+            <label for="entryType" class="add-label">Select type:</label>
             <select id="entryType" class="form-select">
                 <option value="Account" ${defaultType === "Account" ? "selected" : ""}>Account</option>
                 <option value="Card">Card</option>
@@ -71,8 +71,8 @@ window.onload = function () {
             <div id="formContent" style="margin-top: 20px;"></div>
 
             <div style="margin-top: 20px;">
-                <button id="saveAccountBtn" class="form-button">Save</button>
-                <button class="form-button" onclick="document.getElementById('middleContent').innerHTML = ''">Cancel</button>
+                <button id="saveAccountBtn" class="add-btn">Save</button>
+                <button class="add-btn" onclick="document.getElementById('middleContent').innerHTML = ''">Cancel</button>
             </div>
         `;
 
@@ -334,10 +334,10 @@ window.onload = function () {
                 <input type="text" id="showListSearch" class="showlist-search" placeholder="Search...">
             </div>
             <div style="margin-bottom: 16px;">
-                <button class="form-button tab-btn" data-type="Account">Accounts</button>
-                <button class="form-button tab-btn" data-type="Card">Cards</button>
-                <button class="form-button tab-btn" data-type="Link">Links</button>
-                <button class="form-button tab-btn" data-type="Wallet">Wallets</button>
+                <button class="showlist-category-btn tab-btn" data-type="Account">Accounts</button>
+                <button class="showlist-category-btn tab-btn" data-type="Card">Cards</button>
+                <button class="showlist-category-btn tab-btn" data-type="Link">Links</button>
+                <button class="showlist-category-btn tab-btn" data-type="Wallet">Wallets</button>
             </div>
             <div id="listContent"></div>
         `;
@@ -410,19 +410,19 @@ window.onload = function () {
                 <div class="horizontal-group">
                     <label class="form-label">Resource:</label>
                     <input class="form-input" type="text" value="${account.resource}" readonly>
-                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                    <button class="icon-button icon icon-edit edit-btn"></button>
+                    <button class="icon-button icon icon-delete delete-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Login:</label>
                     <input class="form-input" type="text" value="${account.username}" readonly>
-                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                    <button class="icon-button icon icon-copy copy-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Password:</label>
                     <input class="form-input" type="password" value="${account.password}" readonly>
-                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                    <button class="icon-button icon icon-visibility toggle-btn"></button>
+                    <button class="icon-button icon icon-copy copy-btn"></button>
                 </div>
 
                 <hr style="margin-top: 20px;">
@@ -497,13 +497,13 @@ window.onload = function () {
                 <div class="horizontal-group">
                     <label class="form-label">Resource:</label>
                     <input class="form-input" type="text" value="${card.resource}" readonly>
-                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                    <button class="icon-button icon icon-edit edit-btn"></button>
+                    <button class="icon-button icon icon-delete delete-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Number:</label>
                     <input class="form-input" type="text" value="${card.cardNumber}" readonly>
-                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                    <button class="icon-button icon icon-copy copy-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Date:</label>
@@ -512,17 +512,17 @@ window.onload = function () {
                 <div class="horizontal-group">
                     <label class="form-label">Owner:</label>
                     <input class="form-input" type="text" value="${card.ownerName}" readonly>
-                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                    <button class="icon-button icon icon-copy copy-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">CVV:</label>
                     <input class="form-input" type="password" value="${card.cvv}" readonly>
-                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                    <button class="icon-button icon icon-visibility toggle-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Pincode:</label>
                     <input class="form-input" type="password" value="${card.cardPin}" readonly>
-                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
+                    <button class="icon-button icon icon-visibility toggle-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Network:</label>
@@ -602,13 +602,13 @@ window.onload = function () {
                 <div class="horizontal-group">
                     <label class="form-label">Resource:</label>
                     <input class="form-input" type="text" value="${link.resource}" readonly>
-                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                    <button class="icon-button icon icon-edit edit-btn"></button>
+                    <button class="icon-button icon icon-delete delete-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Link:</label>
                     <input class="form-input" type="text" value="${link.link}" readonly>
-                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                    <button class="icon-button icon icon-copy copy-btn"></button>
                 </div>
 
                 <hr style="margin-top: 20px;">
@@ -669,21 +669,23 @@ window.onload = function () {
                 <div class="horizontal-group">
                     <label class="form-label">Resource:</label>
                     <input class="form-input" type="text" value="${wallet.resource}" readonly>
-                    <button class="icon-button edit-btn"><img src="/img/Icons/edit_24_White.png" alt="Edit"></button>
-                    <button class="icon-button delete-btn"><img src="/img/Icons/delete_24_White.png" alt="Delete"></button>
+                    <button class="icon-button icon icon-edit edit-btn"></button>
+                    <button class="icon-button icon icon-delete delete-btn"></button>
                 </div>
-                    <label class="form-label">Key words:</label>
-                    <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea>
+
+                <label class="form-label">Key words:</label>
+                <textarea class="form-textarea" readonly>${wallet.keyWords}</textarea>
+
                 <div class="horizontal-group">
                     <label class="form-label">Address:</label>
                     <input class="form-input" type="text" value="${wallet.address}" readonly>
-                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                    <button class="icon-button icon icon-copy copy-btn"></button>
                 </div>
                 <div class="horizontal-group">
                     <label class="form-label">Password:</label>
                     <input class="form-input" type="password" value="${wallet.password}" readonly>
-                    <button class="icon-button toggle-btn"><img src="/img/Icons/visibility_24_White.png" alt="Show"></button>
-                    <button class="icon-button copy-btn"><img src="/img/Icons/copy_24_White.png" alt="Copy"></button>
+                    <button class="icon-button icon icon-visibility toggle-btn"></button>
+                    <button class="icon-button icon icon-copy copy-btn"></button>
                 </div>
 
                 <hr style="margin-top: 20px;">
@@ -774,23 +776,23 @@ window.onload = function () {
                             function renderAccountInfo(user) {
                                 prefsContent.innerHTML = `
                                     <div class="horizontal-group">
-                                        <label class="form-label">Email:</label>
-                                        <input class="form-input" id="userEmail" type="email" value="${user.email}" readonly>
-                                        <button class="form-button" id="editAccountBtn">Edit:</button>
+                                        <label class="acc-info-label">Email:</label>
+                                        <input class="acc-info-field" id="userEmail" type="email" value="${user.email}" readonly>
+                                        <button class="acc-info-btn" id="editAccountBtn">Edit</button>
                                     </div>
                                     <div class="horizontal-group">
-                                        <label class="form-label">Username:</label>
-                                        <input class="form-input" id="userUsername" type="text" value="${user.username}" readonly>
+                                        <label class="acc-info-label">Username:</label>
+                                        <input class="acc-info-field" id="userUsername" type="text" value="${user.username}" readonly>
                                     </div>
                                     <div class="horizontal-group">
-                                        <label class="form-label">Password:</label>
-                                        <input class="form-input" id="userPassword" type="password" value="${user.password}" readonly>
-                                        <button class="form-button" id="showPasswordBtn">Show</button>
+                                        <label class="acc-info-label">Password:</label>
+                                        <input class="acc-info-field" id="userPassword" type="password" value="${user.password}" readonly>
+                                        <button class="acc-info-btn" id="showPasswordBtn">Show</button>
                                     </div>
                                     <div class="horizontal-group">
-                                        <label class="form-label">Additional password:</label>
-                                        <input class="form-input" id="userAdditionalPassword" type="password" value="${user.additionalPassword}" readonly>
-                                        <button class="form-button" id="showAdditionalPassword">Show</button>
+                                        <label class="acc-info-label">Additional password:</label>
+                                        <input class="acc-info-field" id="userAdditionalPassword" type="password" value="${user.additionalPassword}" readonly>
+                                        <button class="acc-info-btn" id="showAdditionalPassword">Show</button>
                                     </div>
                                 `;
                                 // show/hide password
@@ -816,12 +818,12 @@ window.onload = function () {
                                     // Add save and cansel buttons in the same row
                                     const emailGroup = this.parentElement;
                                     const saveBtn = document.createElement("button");
-                                    saveBtn.className = "form-button";
+                                    saveBtn.className = "acc-info-btn";
                                     saveBtn.textContent = "Save";
                                     emailGroup.appendChild(saveBtn);
 
                                     const cancelBtn = document.createElement("button");
-                                    cancelBtn.className = "form-button";
+                                    cancelBtn.className = "acc-info-btn";
                                     cancelBtn.textContent = "Cancel";
                                     emailGroup.appendChild(cancelBtn);
                                     // Handle cancel
@@ -884,9 +886,9 @@ window.onload = function () {
                             }
                     } else if (tabType === "security") {
                         prefsContent.innerHTML = `
-                            <button class="form-button" id="doubleConfirmBtn">Double confirmation</button>
-                            <button class="form-button" id="storeLogsBtn">Store logs</button>
-                            <button class="form-button" id="clearLogsBtn">Clear logs</button>
+                            <button class="security-btn" id="doubleConfirmBtn">Double confirmation</button>
+                            <button class="security-btn" id="storeLogsBtn">Store logs</button>
+                            <button class="security-btn" id="clearLogsBtn">Clear logs</button>
                         `;
                         // Double confirmation checkbox logic
                         document.getElementById("doubleConfirmBtn").addEventListener("click", function() {
@@ -956,11 +958,7 @@ window.onload = function () {
                             }
                         });
                     } else if (tabType === "theme") {
-                        prefsContent.innerHTML = `
-                            <label class="form-label">Click to switch the theme:</label><br>
-                            <button class="form-button" id="themeSwitchBtn">Switch Theme</button>
-                        `;
-                        document.getElementById("themeSwitchBtn").addEventListener("click", toggleTheme);
+                        toggleTheme();
                     }
                 });
             });
@@ -1055,20 +1053,20 @@ window.onload = function () {
 
         const dialog = document.createElement("div");
         dialog.style.backgroundColor = "#222";
-        dialog.style.padding = "30px";
+        dialog.style.padding = "20px";
         dialog.style.borderRadius = "10px";
         dialog.style.width = "400px";
 
         dialog.innerHTML = `
-            <h3>Edit account</h3>
-            <label class="form-label">Resource:</label>
-            <input id="editResource" class="form-input" value="${account.resource}"><br>
-            <label class="form-label">Login:</label>
-            <input id="editUsername" class="form-input" value="${account.username}"><br>
-            <label class="form-label">Password:</label>
-            <input id="editPassword" class="form-input" type="text" value="${account.password}"><br><br>
-            <button id="saveEditBtn" class="form-button">Save</button>
-            <button id="cancelEditBtn" class="form-button">Cancel</button>
+            <h3 class="dialog-head">Edit account</h3>
+            <label class="dialog-label">Resource:</label>
+            <input id="editResource" class="dialog-field" value="${account.resource}"><br>
+            <label class="dialog-label">Login:</label>
+            <input id="editUsername" class="dialog-field" value="${account.username}"><br>
+            <label class="dialog-label">Password:</label>
+            <input id="editPassword" class="dialog-field" type="text" value="${account.password}"><br><br>
+            <button id="saveEditBtn" class="dialog-btn">Save</button>
+            <button id="cancelEditBtn" class="dialog-btn">Cancel</button>
         `;
 
         overlay.append(dialog);
@@ -1122,29 +1120,29 @@ window.onload = function () {
 
         const dialog = document.createElement("div");
         dialog.style.backgroundColor = "#222";
-        dialog.style.padding = "30px";
+        dialog.style.padding = "20px";
         dialog.style.borderRadius = "10px";
         dialog.style.width = "420px";
         dialog.innerHTML = `
-            <h3>Edit Card</h3>
-            <label class="form-label">Resource:</label>
-            <input id="editResource" class="form-input" value="${card.resource}"><br>
-            <label class="form-label">Number:</label>
-            <input id="editNumber" class="form-input" value="${card.cardNumber}"><br>
-            <label class="form-label">Date:</label>
-            <input id="editDate" class="form-input" value="${card.expiryDate}"><br>
-            <label class="form-label">CVV:</label>
-            <input id="editCvv" class="form-input" type="text" value="${card.cvv}"><br>
-            <label class="form-label">Owner:</label>
-            <input id="editOwner" class="form-input" value="${card.ownerName}"><br>
-            <label class="form-label">PIN:</label>
-            <input id="editPin" class="form-input" type="text" value="${card.cardPin}"><br>
-            <label class="form-label">Pay Network:</label>
-            <input id="editNetwork" class="form-input" value="${card.cardNetwork}"><br>
-            <label class="form-label">Card Type:</label>
-            <input id="editType" class="form-input" value="${card.cardType}"><br><br>
-            <button id="saveEditCardBtn" class="form-button">Save</button>
-            <button id="cancelEditCardBtn" class="form-button">Cancel</button>
+            <h3 class="dialog-head">Edit Card</h3>
+            <label class="dialog-label">Resource:</label>
+            <input id="editResource" class="dialog-field" value="${card.resource}"><br>
+            <label class="dialog-label">Number:</label>
+            <input id="editNumber" class="dialog-field" value="${card.cardNumber}"><br>
+            <label class="dialog-label">Owner:</label>
+            <input id="editOwner" class="dialog-field" value="${card.ownerName}"><br>
+            <label class="dialog-label">Date:</label>
+            <input id="editDate" class="dialog-field small" value="${card.expiryDate}"><br>
+            <label class="dialog-label">CVV:</label>
+            <input id="editCvv" class="dialog-field small" type="text" value="${card.cvv}"><br>
+            <label class="dialog-label">PIN:</label>
+            <input id="editPin" class="dialog-field small" type="text" value="${card.cardPin}"><br>
+            <label class="dialog-label">Network:</label>
+            <input id="editNetwork" class="dialog-field small" value="${card.cardNetwork}"><br>
+            <label class="dialog-label">Card Type:</label>
+            <input id="editType" class="dialog-field small" value="${card.cardType}"><br><br>
+            <button id="saveEditCardBtn" class="dialog-btn">Save</button>
+            <button id="cancelEditCardBtn" class="dialog-btn">Cancel</button>
         `;
         overlay.append(dialog);
         document.body.appendChild(overlay);
@@ -1202,18 +1200,18 @@ window.onload = function () {
 
         const dialog = document.createElement("div");
         dialog.style.backgroundColor = "#222";
-        dialog.style.padding = "30px";
+        dialog.style.padding = "20px";
         dialog.style.borderRadius = "10px";
         dialog.style.width = "400px";
 
         dialog.innerHTML = `
-            <h3>Edit Link</h3>
-            <label class="form-label">Resource:</label>
-            <input id="editResource" class="form-input" type="text" value="${link.resource}"><br>
-            <label class="form-label">Link:</label>
-            <input id="editLink" class="form-input" type="text" value="${link.link}"><br><br>
-            <button id="saveEditBtn" class="form-button">Save</button>
-            <button id="cancelEditBtn" class="form-button">Cancel</button>
+            <h3 class="dialog-head">Edit Link</h3>
+            <label class="dialog-label">Resource:</label>
+            <input id="editResource" class="dialog-field" type="text" value="${link.resource}"><br>
+            <label class="dialog-label">Link:</label>
+            <input id="editLink" class="dialog-field" type="text" value="${link.link}"><br><br>
+            <button id="saveEditBtn" class="dialog-btn">Save</button>
+            <button id="cancelEditBtn" class="dialog-btn">Cancel</button>
         `;
 
         overlay.append(dialog);
@@ -1265,22 +1263,22 @@ window.onload = function () {
 
         const dialog = document.createElement("div");
         dialog.style.backgroundColor = "#222";
-        dialog.style.padding = "30px";
+        dialog.style.padding = "20px";
         dialog.style.borderRadius = "10px";
         dialog.style.width = "400px";
 
         dialog.innerHTML = `
-            <h3>Edit Wallet</h3>
-            <label class="form-label">Resource:</label>
-            <input id="editResource" class="form-input" type="text" value="${wallet.resource}"><br>
-            <label class="form-label">Key Words:</label>
+            <h3 class="dialog-head">Edit Wallet</h3>
+            <label class="dialog-label">Resource:</label>
+            <input id="editResource" class="dialog-field" type="text" value="${wallet.resource}"><br>
+            <label class="dialog-label">Key Words:</label>
             <textarea id="editKeyWords" class="form-textarea">${wallet.keyWords}</textarea><br>
-            <label class="form-label">Address:</label>
-            <input id="editAddress" class="form-input" type="text" value="${wallet.address}"><br>
-            <label class="form-label">Password:</label>
-            <input id="editPassword" class="form-input" type="text" value="${wallet.password}"><br><br>
-            <button id="saveEditBtn" class="form-button">Save</button>
-            <button id="cancelEditBtn" class="form-button">Cancel</button>
+            <label class="dialog-label">Address:</label>
+            <input id="editAddress" class="dialog-field" type="text" value="${wallet.address}"><br>
+            <label class="dialog-label">Password:</label>
+            <input id="editPassword" class="dialog-field" type="text" value="${wallet.password}"><br><br>
+            <button id="saveEditBtn" class="dialog-btn">Save</button>
+            <button id="cancelEditBtn" class="dialog-btn">Cancel</button>
         `;
 
         overlay.append(dialog);

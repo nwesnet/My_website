@@ -28,6 +28,8 @@ public class Wallet {
     @JoinColumn(name = "user_id")
     private User user;
 
+    private String ownerUsername;
+
     // Getters and Setters
     // User
     public User getUser() {
@@ -35,6 +37,13 @@ public class Wallet {
     }
     public void setUser(User user) {
         this.user = user;
+    }
+    // Owner username
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
     }
     // IdForItems
     public String getId() {

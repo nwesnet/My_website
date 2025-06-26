@@ -4,6 +4,8 @@
     --card: #111;                /* Main card/section backgrounds */
     --card-alt: #222;            /* Button backgrounds, nav items, etc */
     --card-alt-hover: #333;      /* Button/nav hover backgrounds */
+    --btn-alt: #444;
+    --btn-alt-hover: #555;
 
     /* === ACCENT (Purple) === */
     --accent: #bb6bd9;           /* Main accent (purple) for buttons/links/nav highlights */
@@ -38,6 +40,17 @@
     /* === FOOTER === */
     --footer-bg: var(--card);      /* Footer background */
     --footer-text: var(--text);    /* Footer text color */
+
+
+    --icon-edit: url('/img/Icons/edit_24_White.png');
+    --icon-delete: url('/img/Icons/delete_24_White.png');
+    --icon-copy: url('/img/Icons/copy_24_White.png');
+    --icon-visibility: url('/img/Icons/visibility_24_White.png');
+    --icon-add: url('/img/Icons/add_24_White.png');
+    --icon-password: url('/img/Icons/password_24_White.png');
+    --icon-format-list: url('/img/Icons/format_list_24_White.png');
+    --icon-settings: url('/img/Icons/settings_24_White.png');
+    --icon-history: url('/img/Icons/history_24_White.png');
 }
 html, body {
     background: var(--main-bg);

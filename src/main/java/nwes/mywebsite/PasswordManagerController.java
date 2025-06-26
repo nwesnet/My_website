@@ -21,6 +21,7 @@ public class PasswordManagerController {
     private final WalletService walletService;
     private final LogService logService;
     private final UserRepository userRepository;
+    private final UserService userService;
     private final UserSettingsService userSettingsService;
 
     public PasswordManagerController(AccountService accountService,
@@ -29,6 +30,7 @@ public class PasswordManagerController {
                                      WalletService walletService,
                                      LogService logService,
                                      UserRepository userRepository,
+                                     UserService userService,
                                      UserSettingsService userSettingsService) {
         this.accountService = accountService;
         this.cardService = cardService;
@@ -36,6 +38,7 @@ public class PasswordManagerController {
         this.walletService = walletService;
         this.logService = logService;
         this.userRepository = userRepository;
+        this.userService = userService;
         this.userSettingsService = userSettingsService;
     }
 
@@ -50,8 +53,13 @@ public class PasswordManagerController {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (accountService.accountExists(user, resource, username, password)) {
+            return "Account already exists";
+        }
+
         Account account = new Account();
         account.setUser(user);
+        account.setOwnerUsername(user.getUsername());
         account.setId(UUID.randomUUID().toString());
         account.setResource(resource);
         account.setUsername(username);
@@ -86,6 +94,11 @@ public class PasswordManagerController {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        // Check for uniqueness
+        if (cardService.cardExists(user, resource, cardNumber, expiryDate, ownerName, cvv)) {
+            return "Card already exists";
+        }
+
         Card card = new Card();
         card.setUser(user);
         card.setId(UUID.randomUUID().toString());
@@ -97,6 +110,7 @@ public class PasswordManagerController {
         card.setCardPin(cardPin);
         card.setCardNetwork(cardNetwork);
         card.setCardType(cardType);
+        card.setOwnerUsername(user.getUsername()); // <-- Make sure to set ownerUsername!
         card.setDateAdded(LocalDateTime.now());
         card.setLastModified(LocalDateTime.now());
         card.setDeleted("false");
@@ -121,8 +135,12 @@ public class PasswordManagerController {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        if (linkService.linkExists(user, resource, linkURL))
+            return "Link already exists";
+
         Link link = new Link();
         link.setUser(user);
+        link.setOwnerUsername(principal.getName());
         link.setId(UUID.randomUUID().toString());
         link.setResource(resource);
         link.setLink(linkURL);
@@ -151,8 +169,13 @@ public class PasswordManagerController {
     ) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (walletService.walletExists(user, resource, keyWords, address, password))
+            return "Wallet already exists";
+
         Wallet wallet = new Wallet();
         wallet.setUser(user);
+        wallet.setOwnerUsername(principal.getName());
         wallet.setId(UUID.randomUUID().toString());
         wallet.setResource(resource);
         wallet.setKeyWords(keyWords);
@@ -186,21 +209,21 @@ public class PasswordManagerController {
     public List<Card> getCards(Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return cardService.getCardsByUser(user);
+        return cardService.getCardsByUser(user, true, false);
     }
     @GetMapping("/list-links")
     @ResponseBody
     public List<Link> getLinks(Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return linkService.getLinksByUser(user);
+        return linkService.getLinksByUser(user, true, false);
     }
     @GetMapping("/list-wallets")
     @ResponseBody
     public List<Wallet> getWallets(Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return walletService.getWalletsByUser(user);
+        return walletService.getWalletsByUser(user, true, false);
     }
     @PostMapping("/update-account")
     @ResponseBody
@@ -214,12 +237,18 @@ public class PasswordManagerController {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("user not found"));
         Account account = accountService.find(id).orElseThrow(() -> new RuntimeException("Account not found"));
-        if(!account.getUser().getId().equals(user.getId())){
+        if (!account.getUser().getId().equals(user.getId())){
             return "Unauthorized";
         }
+
+        if (accountService.accountExistsExceptId(user, resource, username, password, id))
+            return "Account already exists";
+
+
         account.setResource(resource);
         account.setUsername(username);
         account.setPassword(password);
+        account.setOwnerUsername(principal.getName());
         account.setLastModified(LocalDateTime.now());
 
         accountService.saveAccount(account);
@@ -266,9 +295,14 @@ public class PasswordManagerController {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Card card = cardService.find(id).orElseThrow(() -> new RuntimeException("Card not found"));
-        if(!card.getUser().getId().equals(user.getId())) {
+        if (!card.getUser().getId().equals(user.getId())) {
             return "Unauthorized";
         }
+
+        // Uniqueness check (except current card)
+        if (cardService.cardExistsExceptId(user, resource, cardNumber, expiryDate, ownerName, cvv, id))
+            return "Card already exists";
+
         card.setResource(resource);
         card.setCardNumber(cardNumber);
         card.setExpiryDate(expiryDate);
@@ -277,6 +311,7 @@ public class PasswordManagerController {
         card.setCardPin(cardPin);
         card.setCardNetwork(cardNetwork);
         card.setCardType(cardType);
+        card.setOwnerUsername(user.getUsername());
         card.setLastModified(LocalDateTime.now());
 
         cardService.saveCard(card);
@@ -288,16 +323,18 @@ public class PasswordManagerController {
 
         return "OK";
     }
+
     @DeleteMapping("/delete-card/{id}")
     @ResponseBody
     public String deleteCard(@PathVariable String id, Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Card card = cardService.find(id).orElseThrow(() -> new RuntimeException("Card not found"));
-        if(!card.getUser().getId().equals(user.getId())) {
+        if (!card.getUser().getId().equals(user.getId())) {
             return "Unauthorized";
         }
-        cardService.deleteCard(id);
+        // Soft delete for consistency, but you can use hard delete if you prefer!
+        cardService.softDeleteCard(id, user);
 
         UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
         if (userSettings.isStoreLogs()) {
@@ -320,8 +357,13 @@ public class PasswordManagerController {
         if(!link.getUser().getId().equals(user.getId())) {
             return "Unauthorized";
         }
+
+        if (linkService.linkExistsExceptId(user, resource, linkURL, id))
+            return "Link already exists";
+
         link.setResource(resource);
         link.setLink(linkURL);
+        link.setOwnerUsername(principal.getName());
         link.setLastModified(LocalDateTime.now());
 
         linkService.saveLink(link);
@@ -342,7 +384,8 @@ public class PasswordManagerController {
         if(!link.getUser().getId().equals(user.getId())) {
             return "Unauthorized";
         }
-        linkService.deleteLink(id);
+
+        linkService.softDeleteLink(id, user);
 
         UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
         if (userSettings.isStoreLogs()) {
@@ -364,13 +407,18 @@ public class PasswordManagerController {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Wallet wallet = walletService.find(id).orElseThrow(() -> new RuntimeException("Wallet not found"));
-        if(!wallet.getUser().getId().equals(user.getId())) {
+        if (!wallet.getUser().getId().equals(user.getId())) {
             return "Unauthorized";
         }
+
+        if (walletService.walletExistsExceptId(user, resource, keyWords, address, password, id))
+            return "Wallet already exists";
+
         wallet.setResource(resource);
         wallet.setKeyWords(keyWords);
         wallet.setAddress(address);
         wallet.setPassword(password);
+        wallet.setOwnerUsername(principal.getName());
         wallet.setLastModified(LocalDateTime.now());
 
         walletService.saveWallet(wallet);
@@ -391,7 +439,7 @@ public class PasswordManagerController {
         if(!wallet.getUser().getId().equals(user.getId())) {
             return "Unauthorized";
         }
-        walletService.deleteWallet(id);
+        walletService.softDeleteWallet(id, user);
 
         UserSettings userSettings = userSettingsService.getOrCreate(user.getUsername());
         if (userSettings.isStoreLogs()) {
@@ -432,11 +480,8 @@ public class PasswordManagerController {
             return "Username already taken";
         }
         boolean usernameChanged = !user.getUsername().equals(newUsername);
-        user.setEmail(newEmail);
-        user.setUsername(newUsername);
-        user.setPassword(newPassword);
-        user.setAdditionalPassword(newAdditionalPassword);
-        userRepository.save(user);
+
+        userService.reencryptUserDataForWeb(user, newEmail, newUsername, newPassword, newAdditionalPassword);
 
         return usernameChanged ? "USERNAME_CHANGED" : "OK";
     }

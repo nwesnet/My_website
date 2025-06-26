@@ -28,4 +28,12 @@ public class UserSettingsService {
     public void update(UserSettings settings) {
         userSettingsRepository.save(settings);
     }
+
+    public void updateUsername(String oldUsername, String newUsername) {
+        UserSettings settings = userSettingsRepository.findByUsername(oldUsername).orElseThrow(() -> new RuntimeException("User not found"));
+        if (settings != null) {
+            settings.setUsername(newUsername);
+            userSettingsRepository.save(settings);
+        }
+    }
 }

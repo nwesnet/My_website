@@ -11,5 +11,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 themeLink.setAttribute("href", "/css/dark.css");
             }
         })
-        .catch(err => console.error("Failed to load theme settings:", err));
+        .catch(err => {
+            console.error("Failed to load theme settings: ", err);
+        });
 });

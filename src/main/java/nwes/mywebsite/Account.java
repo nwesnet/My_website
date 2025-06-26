@@ -25,11 +25,8 @@ public class Account {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    @JsonProperty("ownerUsername")
-    public String getOwnerUsername() {
-        return user != null ? user.getUsername() : null;
-    }
 
+    private String ownerUsername;
 
     // Getters and Setters
     // User
@@ -38,6 +35,13 @@ public class Account {
     }
     public void setUser(User user) {
         this.user = user;
+    }
+    // OwnerUsername
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
     }
     // IdForItems
     public String getId() {

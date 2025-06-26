@@ -3,6 +3,7 @@ package nwes.mywebsite;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import javax.print.attribute.standard.Severity;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +27,15 @@ public class LogService {
             entry.setLogText(encryptedMessage);
             entry.setLocalDateTime(LocalDateTime.now());
             logRepository.save(entry);
+        } catch (Exception e) {
+            throw new RuntimeException("Encryption failed: ", e);
+        }
+    }
+    public void saveLog(LogEntry logEntry) {
+        try {
+            SecretKey key = cryptoService.getKeyFromString(logEntry.getUser().getUsername() + logEntry.getUser().getPassword());
+            logEntry.setLogText(cryptoService.encrypt(logEntry.getLogText(), key));
+            logRepository.save(logEntry);
         } catch (Exception e) {
             throw new RuntimeException("Encryption failed: ", e);
         }
