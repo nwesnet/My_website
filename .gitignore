@@ -31,7 +31,7 @@ build/
 
 ### Additional ###
 src/main/resources/application.properties
-
+downloads/*
 # Ignore all images inside these folders
 src/main/resources/static/img/PasswordmanagerImg/*
 src/main/resources/static/img/DictionaryImg/*

@@ -28,12 +28,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
-    window.downloadSelected = function() {
-        const version = document.getElementById("versionSelector").value;
-        if(version && version !== "Select version (placeholder)") {
-            window.location.href = `/download/passwordmanager/${version}`;
-        } else {
-            alert("Please select a version to download.");
-        }
-    };
+    const downloadBtn = document.getElementById("downloadBtn");
+    if (downloadBtn) {
+        downloadBtn.addEventListener("click", () => {
+            const select = document.getElementById("versionSelector")
+            const selectedValue = select.value;
+            if (!selectedValue || selectedValue === "Select version") {
+                alert("Please select a version first");
+                return;
+            }
+            window.location.href = `/downloads/${selectedValue}`;
+        })
+    }
 });
